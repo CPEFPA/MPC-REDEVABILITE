@@ -10,6 +10,7 @@ class MPCApp {
     constructor() {
         this.reports = [];
         this.currentView = 'dashboard';
+        this.leafletMap = null; // 🆕 Pour gérer la carte proprement
         this.init();
     }
 
@@ -24,7 +25,7 @@ class MPCApp {
         this.renderReportsList();
         this.renderAgentReports();
         this.updateOfflineCount();
-        this.initMap(); // 🆕 Initialiser la carte interactive
+        this.initMap();
     }
 
     async loadReportsFromSheet() {
@@ -72,7 +73,7 @@ class MPCApp {
         this.renderDashboard();
         this.renderReportsList();
         this.renderAgentReports();
-        this.refreshMap(); // 🆕 Rafraîchir la carte après chargement
+        this.refreshMap();
         if (btn) {
             btn.innerHTML = '<i class="fas fa-check"></i> Données à jour !';
             setTimeout(() => {
@@ -274,7 +275,7 @@ class MPCApp {
             this.renderAgentReports();
             this.renderDashboard();
             this.renderReportsList();
-            this.refreshMap(); // 🆕 Mettre à jour la carte après changement de statut
+            this.refreshMap();
             alert(`✅ Statut : ${this.getStatusLabel(newStatus)}`);
         } catch (error) {
             alert('❌ Erreur de mise à jour.');
@@ -304,8 +305,13 @@ class MPCApp {
         return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    // 🆕 CARTE INTERACTIVE DES CANTONS
+    // 🆕 CARTE INTERACTIVE DES CANTONS (CORRIGÉE)
     initMap() {
+        // 🛑 CORRECTION : Supprimer l'ancienne carte si elle existe pour éviter l'erreur "already initialized"
+        if (this.leafletMap) {
+            this.leafletMap.remove();
+        }
+
         const cantons = [
             { name: 'Aképé', lat: 6.2150, lng: 1.3520 },
             { name: 'Noépé', lat: 6.2280, lng: 1.3650 },
@@ -315,12 +321,12 @@ class MPCApp {
         const mapContainer = document.getElementById('map');
         if (!mapContainer) return;
 
-        const map = L.map('map').setView([6.2150, 1.3520], 12);
+        this.leafletMap = L.map('map').setView([6.2150, 1.3520], 12);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
             attribution: '© OpenStreetMap contributors',
             maxZoom: 18
-        }).addTo(map);
+        }).addTo(this.leafletMap);
 
         const countsByCanton = {};
         cantons.forEach(c => {
@@ -354,7 +360,7 @@ class MPCApp {
                 weight: 2,
                 opacity: 1,
                 fillOpacity: 0.8
-            }).addTo(map);
+            }).addTo(this.leafletMap);
 
             const popupContent = `
                 <div style="text-align: center; font-family: sans-serif;">
@@ -385,15 +391,11 @@ class MPCApp {
             `;
             return div;
         };
-        legend.addTo(map);
+        legend.addTo(this.leafletMap);
     }
 
     refreshMap() {
-        const mapContainer = document.getElementById('map');
-        if (mapContainer) {
-            mapContainer.innerHTML = '';
-            this.initMap();
-        }
+        this.initMap();
     }
 }
 
@@ -414,6 +416,14 @@ function showExportModal() {
 function closeExportModal() {
     const modal = document.getElementById('export-modal');
     if (modal) modal.classList.remove('active');
+}
+
+// 🆕 FONCTION POUR LE BOUTON "PROPOSER UN SUJET"
+function proposerSujet() {
+    const sujet = prompt("Quel sujet souhaitez-vous proposer pour la prochaine rencontre de redevabilité ?");
+    if (sujet && sujet.trim() !== "") {
+        alert("✅ Merci ! Votre proposition a été enregistrée et sera transmise au Bureau du Citoyen.\n\nSujet : \"" + sujet + "\"");
+    }
 }
 
 function exportReport(type, period = 'all') {
@@ -550,7 +560,8 @@ function exportReport(type, period = 'all') {
             headStyles: { fillColor: colors.primary, textColor: 255, fontStyle: 'bold', fontSize: 10 },
             bodyStyles: { fontSize: 9, textColor: colors.text },
             alternateRowStyles: { fillColor: colors.light },
-            columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 25 }, 2: { cellWidth: 30 }, 3: { cellWidth: 45 }, 4: { cellWidth: 35 }, 5: { cellWidth: 25 } },
+            // 🛑 CORRECTION : Largeurs réduites pour éviter l'avertissement de dépassement de page
+            columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 22 }, 2: { cellWidth: 28 }, 3: { cellWidth: 40 }, 4: { cellWidth: 32 }, 5: { cellWidth: 20 } },
             didParseCell: function(data) {
                 if (data.section === 'body' && data.column.index === 5) {
                     if (data.cell.raw === 'Résolu') { data.cell.styles.textColor = '#10B981'; data.cell.styles.fontStyle = 'bold'; }

@@ -97,7 +97,8 @@
                             <p>10h00 - Mairie d'Avé 2 / Place publique d'Aképé</p>
                         </div>
                     </div>
-                    <button class="btn btn-primary">
+                    <!-- ✅ CORRECTION : Ajout de onclick="proposerSujet()" -->
+                    <button class="btn btn-primary" onclick="proposerSujet()">
                         <i class="fas fa-plus"></i> Proposer un sujet
                     </button>
                 </div>
@@ -249,6 +250,7 @@
                             <i class="fas fa-file-pdf"></i>
                             <h4>Rapport PDF Professionnel</h4>
                             <p>Générer un rapport avec statistiques et tableau des signalements pour la redevabilité</p>
+                            <!-- ✅ CORRECTION : Fonction showExportModal() et texte nettoyé -->
                             <button class="btn btn-primary" onclick="showExportModal()">
                                 <i class="fas fa-download"></i> Générer PDF
                             </button>
@@ -396,7 +398,7 @@
     <!-- Librairies pour l'export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- 🆕 Leaflet JS pour la carte interactive -->
+    <!-- Leaflet JS pour la carte interactive -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
