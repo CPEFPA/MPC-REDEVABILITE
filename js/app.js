@@ -321,7 +321,7 @@ function closeExportModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// 🆕 EXPORT PDF 100% STABLE (Sans await risqué)
+// 🆕 EXPORT PDF 100% STABLE
 function exportReport(type, period = 'all') {
     if (type === 'pdf') {
         closeExportModal();
@@ -348,7 +348,8 @@ function exportReport(type, period = 'all') {
         
         const titles = { 'month': `Rapport Mensuel - ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, 'quarter': 'Rapport Trimestriel', 'year': `Rapport Annuel ${y}`, 'all': 'Rapport Complet' };
 
-        // PAGE 1
+        // PAGE 1 : COUVERTURE AVEC LOGO
+        // Note: Si tu as le code complet de ton image, remplace les 4 lignes ci-dessous par : doc.addImage('TON_CODE_BASE64_COMPLET', 'PNG', 15, 15, 40, 40);
         doc.setFillColor(colors.primary);
         doc.circle(35, 35, 20, 'F');
         doc.setTextColor(255, 255, 255);
@@ -364,7 +365,7 @@ function exportReport(type, period = 'all') {
         doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.text(titles[period], 105, 75, { align: 'center' });
         doc.setFontSize(11); doc.setFont('helvetica', 'italic'); doc.setTextColor(100); doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`, 105, 85, { align: 'center' });
 
-        // PAGE 2
+        // PAGE 2 : STATISTIQUES
         doc.addPage();
         doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.primary); doc.text('📊 Vue d\'ensemble', 105, 20, { align: 'center' });
         
@@ -391,7 +392,7 @@ function exportReport(type, period = 'all') {
         doc.setFillColor(colors.secondary); doc.rect(15, yPos + 15, (rate * 180) / 100, 12, 'F');
         doc.setDrawColor(colors.primary); doc.setLineWidth(0.5); doc.rect(15, yPos + 15, 180, 12, 'S');
 
-        // PAGE 3
+        // PAGE 3 : DÉTAILS
         doc.addPage();
         doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.primary); doc.text('📋 Détail des signalements', 105, 20, { align: 'center' });
         
