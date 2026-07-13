@@ -24,6 +24,7 @@ class MPCApp {
         this.renderReportsList();
         this.renderAgentReports();
         this.updateOfflineCount();
+        this.initMap(); // 🆕 Initialiser la carte interactive
     }
 
     async loadReportsFromSheet() {
@@ -71,6 +72,7 @@ class MPCApp {
         this.renderDashboard();
         this.renderReportsList();
         this.renderAgentReports();
+        this.refreshMap(); // 🆕 Rafraîchir la carte après chargement
         if (btn) {
             btn.innerHTML = '<i class="fas fa-check"></i> Données à jour !';
             setTimeout(() => {
@@ -272,6 +274,7 @@ class MPCApp {
             this.renderAgentReports();
             this.renderDashboard();
             this.renderReportsList();
+            this.refreshMap(); // 🆕 Mettre à jour la carte après changement de statut
             alert(`✅ Statut : ${this.getStatusLabel(newStatus)}`);
         } catch (error) {
             alert('❌ Erreur de mise à jour.');
@@ -300,6 +303,98 @@ class MPCApp {
         const d = new Date(dateStr);
         return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
     }
+
+    // 🆕 CARTE INTERACTIVE DES CANTONS
+    initMap() {
+        const cantons = [
+            { name: 'Aképé', lat: 6.2150, lng: 1.3520 },
+            { name: 'Noépé', lat: 6.2280, lng: 1.3650 },
+            { name: 'Badja', lat: 6.2020, lng: 1.3400 }
+        ];
+
+        const mapContainer = document.getElementById('map');
+        if (!mapContainer) return;
+
+        const map = L.map('map').setView([6.2150, 1.3520], 12);
+
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        const countsByCanton = {};
+        cantons.forEach(c => {
+            countsByCanton[c.name] = { pending: 0, progress: 0, resolved: 0, total: 0 };
+        });
+
+        this.reports.forEach(r => {
+            const location = r.location.toLowerCase();
+            cantons.forEach(c => {
+                if (location.includes(c.name.toLowerCase())) {
+                    countsByCanton[c.name].total++;
+                    if (r.status === 'pending' || r.status === 'En attente') countsByCanton[c.name].pending++;
+                    else if (r.status === 'progress' || r.status === 'En cours') countsByCanton[c.name].progress++;
+                    else if (r.status === 'resolved' || r.status === 'Résolu') countsByCanton[c.name].resolved++;
+                }
+            });
+        });
+
+        cantons.forEach(c => {
+            const counts = countsByCanton[c.name];
+            const activeCount = counts.pending + counts.progress;
+            
+            let color = '#10b981';
+            if (activeCount > 5) color = '#ef4444';
+            else if (activeCount > 2) color = '#f59e0b';
+
+            const marker = L.circleMarker([c.lat, c.lng], {
+                radius: 15 + (counts.total * 2),
+                fillColor: color,
+                color: '#fff',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.8
+            }).addTo(map);
+
+            const popupContent = `
+                <div style="text-align: center; font-family: sans-serif;">
+                    <strong style="color: #006A4E; font-size: 1.1rem;">Canton de ${c.name}</strong><br>
+                    <span style="font-size: 1.2rem; font-weight: bold; color: ${color};">${counts.total} signalement(s)</span><br>
+                    <span style="color: #ef4444;">🔴 En attente : ${counts.pending}</span><br>
+                    <span style="color: #f59e0b;">🟠 En cours : ${counts.progress}</span><br>
+                    <span style="color: #10b981;">🟢 Résolus : ${counts.resolved}</span>
+                </div>
+            `;
+            marker.bindPopup(popupContent);
+        });
+
+        const legend = L.control({ position: 'bottomright' });
+        legend.onAdd = function() {
+            const div = L.DomUtil.create('div', 'info legend');
+            div.style.background = 'white';
+            div.style.padding = '10px';
+            div.style.borderRadius = '8px';
+            div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
+            div.style.fontSize = '0.85rem';
+            div.innerHTML = `
+                <strong style="color: #006A4E;">Légende</strong><br>
+                <span style="color: #10b981;">●</span> Calme (0-2 actifs)<br>
+                <span style="color: #f59e0b;">●</span> Moyen (3-5 actifs)<br>
+                <span style="color: #ef4444;">●</span> Critique (>5 actifs)<br>
+                <small>Taille = nb total</small>
+            `;
+            return div;
+        };
+        legend.addTo(map);
+    }
+
+    refreshMap() {
+        const mapContainer = document.getElementById('map');
+        if (mapContainer) {
+            mapContainer.innerHTML = '';
+            this.initMap();
+        }
+    }
 }
 
 // ========================================
@@ -321,7 +416,6 @@ function closeExportModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// 🆕 EXPORT PDF 100% STABLE (SANS EMOJIS, SANS DUPLICATION)
 function exportReport(type, period = 'all') {
     if (type === 'pdf') {
         closeExportModal();
@@ -353,7 +447,6 @@ function exportReport(type, period = 'all') {
             'all': 'Rapport Complet' 
         };
 
-        // PAGE 1 : COUVERTURE
         doc.setFillColor(colors.primary);
         doc.circle(35, 35, 20, 'F');
         doc.setTextColor(255, 255, 255);
@@ -395,7 +488,6 @@ function exportReport(type, period = 'all') {
         doc.setTextColor(100); 
         doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`, 105, 85, { align: 'center' });
 
-        // PAGE 2 : STATISTIQUES
         doc.addPage();
         doc.setFontSize(20); 
         doc.setFont('helvetica', 'bold'); 
@@ -436,7 +528,6 @@ function exportReport(type, period = 'all') {
         doc.setLineWidth(0.5); 
         doc.rect(15, yPos + 15, 180, 12, 'S');
 
-        // PAGE 3 : DÉTAILS
         doc.addPage();
         doc.setFontSize(20); 
         doc.setFont('helvetica', 'bold'); 
@@ -469,7 +560,6 @@ function exportReport(type, period = 'all') {
             }
         });
 
-        // PIEDS DE PAGE
         const pages = doc.internal.getNumberOfPages();
         for (let i = 1; i <= pages; i++) {
             doc.setPage(i);

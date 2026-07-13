@@ -6,6 +6,8 @@
     <title>MPC-REDEVABILITÉ | Commune d'Avé 2</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Leaflet CSS pour la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
     <!-- HEADER -->
@@ -66,6 +68,12 @@
                     <div class="stat-value" id="stat-pending">0</div>
                     <div class="stat-label">En attente</div>
                 </div>
+            </div>
+
+            <!-- CARTE INTERACTIVE -->
+            <div class="card">
+                <h3><i class="fas fa-map-marked-alt"></i> Carte des signalements par canton</h3>
+                <div id="map" style="height: 400px; border-radius: 8px; z-index: 1;"></div>
             </div>
 
             <div class="dashboard-grid">
@@ -388,5 +396,7 @@
     <!-- Librairies pour l'export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <!-- 🆕 Leaflet JS pour la carte interactive -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
