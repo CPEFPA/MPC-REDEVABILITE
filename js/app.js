@@ -507,10 +507,10 @@ function closeExportModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// 🆕 EXPORT PDF PROFESSIONNEL AVEC LOGO AVE 2
+// 🆕 EXPORT PDF PROFESSIONNEL AVEC LOGO AVE 2 - VERSION CORRIGÉE
 async function exportReport(type, period = 'all') {
     if (type === 'pdf') {
-        closeExportModal(); // Fermer la modal avant de générer
+        closeExportModal();
         
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
@@ -561,6 +561,237 @@ async function exportReport(type, period = 'all') {
             'year': `Rapport Annuel ${currentYear}`,
             'all': 'Rapport Complet - Tous les signalements'
         };
+        
+        // ==================== PAGE 1 : COUVERTURE ====================
+        
+        // Logo Avé 2 (cercle vert avec texte)
+        doc.setFillColor(colors.primary);
+        doc.circle(35, 35, 20, 'F');
+        
+        doc.setTextColor(255, 255, 255);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('Avé', 28, 32);
+        doc.setFontSize(18);
+        doc.text('2', 47, 38);
+        
+        // Titre principal
+        doc.setTextColor(colors.primary);
+        doc.setFontSize(24);
+        doc.setFont('helvetica', 'bold');
+        doc.text('MPC-REDEVABILITÉ', 105, 25, { align: 'center' });
+        
+        doc.setFontSize(14);
+        doc.setFont('helvetica', 'normal');
+        doc.setTextColor(colors.text);
+        doc.text('Mécanismes de Participation Citoyenne', 105, 33, { align: 'center' });
+        
+        // Commune
+        doc.setFontSize(16);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.accent);
+        doc.text('Commune d\'Avé 2', 105, 45, { align: 'center' });
+        doc.setFontSize(12);
+        doc.setFont('helvetica', 'normal');
+        doc.text('(Aképé - Noépé - Badja)', 105, 52, { align: 'center' });
+        
+        // Ligne de séparation
+        doc.setDrawColor(colors.primary);
+        doc.setLineWidth(1);
+        doc.line(15, 60, 195, 60);
+        
+        // Titre du rapport
+        doc.setFontSize(18);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.accent);
+        doc.text(periodLabels[period], 105, 75, { align: 'center' });
+        
+        // Date de génération
+        doc.setFontSize(11);
+        doc.setFont('helvetica', 'italic');
+        doc.setTextColor(100);
+        doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 105, 85, { align: 'center' });
+        
+        // Pied de page page 1
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285);
+        doc.text('Contact: +228 91 36 66 25', 150, 285);
+        doc.text('Page 1', 105, 285, { align: 'center' });
+        
+        // ==================== PAGE 2 : STATISTIQUES ====================
+        doc.addPage();
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.primary);
+        doc.text('📊 Vue d\'ensemble', 105, 20, { align: 'center' });
+        
+        // Statistiques en boîtes colorées
+        const statsData = [
+            { label: 'Total des signalements', value: stats.total, color: colors.primary },
+            { label: 'En attente', value: stats.pending, color: '#F59E0B' },
+            { label: 'En cours de traitement', value: stats.progress, color: '#3B82F6' },
+            { label: 'Résolus', value: stats.resolved, color: colors.secondary }
+        ];
+        
+        let yPos = 35;
+        statsData.forEach((stat) => {
+            // Rectangle de fond
+            doc.setFillColor(stat.color);
+            doc.rect(15, yPos, 180, 25, 'F');
+            
+            // Texte
+            doc.setTextColor(255, 255, 255);
+            doc.setFontSize(14);
+            doc.setFont('helvetica', 'normal');
+            doc.text(stat.label, 25, yPos + 15);
+            
+            doc.setFontSize(20);
+            doc.setFont('helvetica', 'bold');
+            doc.text(stat.value.toString(), 180, yPos + 16, { align: 'right' });
+            
+            yPos += 35;
+        });
+        
+        // Taux de résolution
+        const resolutionRate = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0;
+        
+        doc.setFontSize(14);
+        doc.setTextColor(colors.primary);
+        doc.setFont('helvetica', 'bold');
+        doc.text(`Taux de résolution : ${resolutionRate}%`, 15, yPos + 10);
+        
+        // Barre de progression
+        doc.setFillColor(colors.light);
+        doc.rect(15, yPos + 15, 180, 12, 'F');
+        doc.setFillColor(colors.secondary);
+        doc.rect(15, yPos + 15, (resolutionRate * 180) / 100, 12, 'F');
+        
+        // Bordure de la barre
+        doc.setDrawColor(colors.primary);
+        doc.setLineWidth(0.5);
+        doc.rect(15, yPos + 15, 180, 12, 'S');
+        
+        // Pied de page page 2
+        doc.setFontSize(9);
+        doc.setTextColor(100);
+        doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285);
+        doc.text('Contact: +228 91 36 66 25', 150, 285);
+        doc.text('Page 2', 105, 285, { align: 'center' });
+        
+        // ==================== PAGE 3 : DÉTAILS DES SIGNALEMENTS ====================
+        doc.addPage();
+        
+        doc.setFontSize(20);
+        doc.setFont('helvetica', 'bold');
+        doc.setTextColor(colors.primary);
+        doc.text('📋 Détail des signalements', 105, 20, { align: 'center' });
+        
+        // Préparer les données pour le tableau
+        const tableData = filteredReports.map(r => {
+            const categoryLabel = (MPC_DATA.categories[r.category] || { label: r.category }).label;
+            const statusLabel = app.getStatusLabel(r.status);
+            return [
+                r.id,
+                r.date,
+                categoryLabel,
+                r.title.substring(0, 35) + (r.title.length > 35 ? '...' : ''),
+                r.location.substring(0, 25) + (r.location.length > 25 ? '...' : ''),
+                statusLabel
+            ];
+        });
+        
+        // Créer le tableau avec autoTable
+        doc.autoTable({
+            startY: 30,
+            head: [['ID', 'Date', 'Catégorie', 'Titre', 'Lieu', 'Statut']],
+            body: tableData,
+            theme: 'striped',
+            headStyles: { 
+                fillColor: colors.primary,
+                textColor: 255,
+                fontStyle: 'bold',
+                fontSize: 10
+            },
+            bodyStyles: { 
+                fontSize: 9,
+                textColor: colors.text
+            },
+            alternateRowStyles: { 
+                fillColor: colors.light 
+            },
+            columnStyles: {
+                0: { cellWidth: 20 },
+                1: { cellWidth: 25 },
+                2: { cellWidth: 30 },
+                3: { cellWidth: 45 },
+                4: { cellWidth: 35 },
+                5: { cellWidth: 25 }
+            },
+            didParseCell: function(data) {
+                // Colorer les statuts
+                if (data.section === 'body' && data.column.index === 5) {
+                    const status = data.cell.raw;
+                    if (status === 'Résolu') {
+                        data.cell.styles.textColor = '#10B981';
+                        data.cell.styles.fontStyle = 'bold';
+                    } else if (status === 'En cours') {
+                        data.cell.styles.textColor = '#3B82F6';
+                    } else if (status === 'En attente') {
+                        data.cell.styles.textColor = '#F59E0B';
+                    }
+                }
+            },
+            footStyles: {
+                fillColor: colors.primary,
+                textColor: 255
+            }
+        });
+        
+        // ==================== PIED DE PAGE GLOBAL ====================
+        const finalPage = doc.internal.getNumberOfPages();
+        
+        for (let i = 1; i <= finalPage; i++) {
+            doc.setPage(i);
+            
+            doc.setFontSize(9);
+            doc.setTextColor(100);
+            doc.text(`Page ${i} sur ${finalPage}`, 105, 285, { align: 'center' });
+            doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285);
+            doc.text('Contact: +228 91 36 66 25', 150, 285);
+        }
+        
+        // Télécharger le PDF
+        const fileName = `Rapport_MPC_Ave2_${period}_${now.toISOString().split('T')[0]}.pdf`;
+        doc.save(fileName);
+        
+    } else if (type === 'csv') {
+        closeExportModal();
+        const csv = [
+            ['ID', 'Catégorie', 'Titre', 'Description', 'Lieu', 'Statut', 'Date', 'Agent'],
+            ...app.reports.map(r => [
+                r.id, 
+                (MPC_DATA.categories[r.category] || {label: r.category}).label,
+                r.title, 
+                r.description, 
+                r.location, 
+                app.getStatusLabel(r.status), 
+                r.date,
+                r.agent
+            ])
+        ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
+        
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `MPC_Rapport_Ave2_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+    }
+}
         
         // COUVERTURE
         try {
