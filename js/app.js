@@ -5,12 +5,13 @@
 console.log("✅ Le fichier app.js est bien chargé !");
 
 const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz-wLaWxgyJ5O6RDr1okMSKlxQQJNfDf2Ih7RYCHiu4_ZAXcHBJZNyLC7edFRqTL7_0/exec';
+const ADMIN_PASSWORD = 'Ave2@2026'; // Code d'accès administrateur
 
 class MPCApp {
     constructor() {
         this.reports = [];
         this.currentView = 'dashboard';
-        this.leafletMap = null; // 🆕 Pour gérer la carte proprement
+        this.leafletMap = null;
         this.init();
     }
 
@@ -83,15 +84,13 @@ class MPCApp {
         }
     }
 
-    saveReports() {
-        localStorage.setItem('mpc_reports', JSON.stringify(this.reports));
-    }
+    saveReports() { localStorage.setItem('mpc_reports', JSON.stringify(this.reports)); }
 
     setupNavigation() {
-        document.querySelectorAll('.nav-btn').forEach(btn => {
+        document.querySelectorAll('.nav-btn[data-view]').forEach(btn => {
             btn.addEventListener('click', () => {
                 this.switchView(btn.dataset.view);
-                document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.nav-btn[data-view]').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
             });
         });
@@ -110,15 +109,8 @@ class MPCApp {
         const form = document.getElementById('report-form');
         const desc = document.getElementById('description');
         const charCount = document.getElementById('char-count');
-        if (desc && charCount) {
-            desc.addEventListener('input', () => charCount.textContent = `${desc.value.length} / 500`);
-        }
-        if (form) {
-            form.addEventListener('submit', (e) => {
-                e.preventDefault();
-                this.submitReport(form);
-            });
-        }
+        if (desc && charCount) desc.addEventListener('input', () => charCount.textContent = `${desc.value.length} / 500`);
+        if (form) form.addEventListener('submit', (e) => { e.preventDefault(); this.submitReport(form); });
     }
 
     async submitReport(form) {
@@ -141,12 +133,7 @@ class MPCApp {
         };
 
         try {
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(newReport)
-            });
+            await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(newReport) });
             this.reports.unshift(newReport);
             this.saveReports();
             document.getElementById('tracking-number').textContent = newReport.id;
@@ -168,11 +155,7 @@ class MPCApp {
         const search = document.getElementById('search-input');
         const statusFilter = document.getElementById('filter-status');
         const categoryFilter = document.getElementById('filter-category');
-        const apply = () => this.renderReportsList({
-            search: search ? search.value.toLowerCase() : '',
-            status: statusFilter ? statusFilter.value : 'all',
-            category: categoryFilter ? categoryFilter.value : 'all'
-        });
+        const apply = () => this.renderReportsList({ search: search ? search.value.toLowerCase() : '', status: statusFilter ? statusFilter.value : 'all', category: categoryFilter ? categoryFilter.value : 'all' });
         if (search) search.addEventListener('input', apply);
         if (statusFilter) statusFilter.addEventListener('change', apply);
         if (categoryFilter) categoryFilter.addEventListener('change', apply);
@@ -200,10 +183,7 @@ class MPCApp {
             pending: active.filter(r => r.status === 'pending' || r.status === 'En attente').length
         };
         const set = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
-        set('stat-total', stats.total);
-        set('stat-resolved', stats.resolved);
-        set('stat-progress', stats.progress);
-        set('stat-pending', stats.pending);
+        set('stat-total', stats.total); set('stat-resolved', stats.resolved); set('stat-progress', stats.progress); set('stat-pending', stats.pending);
         this.renderCategoriesChart(active);
         this.renderRecentReports(active);
     }
@@ -263,12 +243,7 @@ class MPCApp {
         const report = this.reports.find(r => r.id === id);
         if (!report) return;
         try {
-            await fetch(GOOGLE_SCRIPT_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ action: 'updateStatus', id: id, status: newStatus, agent: 'Agent Avé 2' })
-            });
+            await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ action: 'updateStatus', id: id, status: newStatus, agent: 'Agent Avé 2' }) });
             report.status = newStatus;
             report.agent = 'Agent communautaire - Avé 2';
             this.saveReports();
@@ -277,9 +252,7 @@ class MPCApp {
             this.renderReportsList();
             this.refreshMap();
             alert(`✅ Statut : ${this.getStatusLabel(newStatus)}`);
-        } catch (error) {
-            alert('❌ Erreur de mise à jour.');
-        }
+        } catch (error) { alert('❌ Erreur de mise à jour.'); }
     }
 
     getStatusLabel(status) {
@@ -305,34 +278,21 @@ class MPCApp {
         return isNaN(d.getTime()) ? dateStr : d.toLocaleDateString('fr-FR', { day: '2-digit', month: 'short', year: 'numeric' });
     }
 
-    // 🆕 CARTE INTERACTIVE DES CANTONS (CORRIGÉE)
     initMap() {
-        // 🛑 CORRECTION : Supprimer l'ancienne carte si elle existe pour éviter l'erreur "already initialized"
-        if (this.leafletMap) {
-            this.leafletMap.remove();
-        }
-
+        if (this.leafletMap) this.leafletMap.remove();
         const cantons = [
             { name: 'Aképé', lat: 6.2150, lng: 1.3520 },
             { name: 'Noépé', lat: 6.2280, lng: 1.3650 },
             { name: 'Badja', lat: 6.2020, lng: 1.3400 }
         ];
-
         const mapContainer = document.getElementById('map');
         if (!mapContainer) return;
 
         this.leafletMap = L.map('map').setView([6.2150, 1.3520], 12);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-            attribution: '© OpenStreetMap contributors',
-            maxZoom: 18
-        }).addTo(this.leafletMap);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap', maxZoom: 18 }).addTo(this.leafletMap);
 
         const countsByCanton = {};
-        cantons.forEach(c => {
-            countsByCanton[c.name] = { pending: 0, progress: 0, resolved: 0, total: 0 };
-        });
-
+        cantons.forEach(c => countsByCanton[c.name] = { pending: 0, progress: 0, resolved: 0, total: 0 });
         this.reports.forEach(r => {
             const location = r.location.toLowerCase();
             cantons.forEach(c => {
@@ -348,55 +308,59 @@ class MPCApp {
         cantons.forEach(c => {
             const counts = countsByCanton[c.name];
             const activeCount = counts.pending + counts.progress;
-            
             let color = '#10b981';
             if (activeCount > 5) color = '#ef4444';
             else if (activeCount > 2) color = '#f59e0b';
 
-            const marker = L.circleMarker([c.lat, c.lng], {
-                radius: 15 + (counts.total * 2),
-                fillColor: color,
-                color: '#fff',
-                weight: 2,
-                opacity: 1,
-                fillOpacity: 0.8
-            }).addTo(this.leafletMap);
-
-            const popupContent = `
-                <div style="text-align: center; font-family: sans-serif;">
-                    <strong style="color: #006A4E; font-size: 1.1rem;">Canton de ${c.name}</strong><br>
-                    <span style="font-size: 1.2rem; font-weight: bold; color: ${color};">${counts.total} signalement(s)</span><br>
-                    <span style="color: #ef4444;">🔴 En attente : ${counts.pending}</span><br>
-                    <span style="color: #f59e0b;">🟠 En cours : ${counts.progress}</span><br>
-                    <span style="color: #10b981;">🟢 Résolus : ${counts.resolved}</span>
-                </div>
-            `;
-            marker.bindPopup(popupContent);
+            const marker = L.circleMarker([c.lat, c.lng], { radius: 15 + (counts.total * 2), fillColor: color, color: '#fff', weight: 2, opacity: 1, fillOpacity: 0.8 }).addTo(this.leafletMap);
+            marker.bindPopup(`<div style="text-align: center;"><strong style="color: #006A4E;">Canton de ${c.name}</strong><br><span style="font-weight: bold; color: ${color};">${counts.total} signalement(s)</span><br><span style="color: #ef4444;">🔴 En attente : ${counts.pending}</span><br><span style="color: #f59e0b;">🟠 En cours : ${counts.progress}</span><br><span style="color: #10b981;"> Résolus : ${counts.resolved}</span></div>`);
         });
-
-        const legend = L.control({ position: 'bottomright' });
-        legend.onAdd = function() {
-            const div = L.DomUtil.create('div', 'info legend');
-            div.style.background = 'white';
-            div.style.padding = '10px';
-            div.style.borderRadius = '8px';
-            div.style.boxShadow = '0 2px 5px rgba(0,0,0,0.2)';
-            div.style.fontSize = '0.85rem';
-            div.innerHTML = `
-                <strong style="color: #006A4E;">Légende</strong><br>
-                <span style="color: #10b981;">●</span> Calme (0-2 actifs)<br>
-                <span style="color: #f59e0b;">●</span> Moyen (3-5 actifs)<br>
-                <span style="color: #ef4444;">●</span> Critique (>5 actifs)<br>
-                <small>Taille = nb total</small>
-            `;
-            return div;
-        };
-        legend.addTo(this.leafletMap);
     }
 
-    refreshMap() {
-        this.initMap();
+    refreshMap() { this.initMap(); }
+}
+
+// ========================================
+// GESTION DU PORTAIL D'ACCÈS
+// ========================================
+
+function selectRole(role) {
+    if (role === 'admin') {
+        const password = prompt("🔒 Veuillez entrer le code d'accès administrateur :");
+        if (password === ADMIN_PASSWORD) {
+            // Accès Admin réussi
+            document.getElementById('access-portal').classList.add('hidden');
+            document.getElementById('btn-logout').style.display = 'block';
+            
+            // Afficher tous les onglets
+            document.getElementById('nav-dashboard').classList.remove('hidden');
+            document.getElementById('nav-agent').classList.remove('hidden');
+            
+            // Aller au tableau de bord
+            app.switchView('dashboard');
+            document.querySelectorAll('.nav-btn[data-view]').forEach(b => b.classList.remove('active'));
+            document.getElementById('nav-dashboard').classList.add('active');
+        } else if (password !== null) {
+            alert("❌ Code incorrect. Accès refusé.");
+        }
+    } else {
+        // Accès Citoyen (libre)
+        document.getElementById('access-portal').classList.add('hidden');
+        document.getElementById('btn-logout').style.display = 'none';
+        
+        // Masquer les onglets réservés aux admins
+        document.getElementById('nav-dashboard').classList.add('hidden');
+        document.getElementById('nav-agent').classList.add('hidden');
+        
+        // Rediriger vers l'onglet Signaler
+        app.switchView('report');
+        document.querySelectorAll('.nav-btn[data-view]').forEach(b => b.classList.remove('active'));
+        document.getElementById('nav-report').classList.add('active');
     }
+}
+
+function logout() {
+    location.reload(); // Recharge la page pour revenir au portail
 }
 
 // ========================================
@@ -418,7 +382,6 @@ function closeExportModal() {
     if (modal) modal.classList.remove('active');
 }
 
-// 🆕 FONCTION POUR LE BOUTON "PROPOSER UN SUJET"
 function proposerSujet() {
     const sujet = prompt("Quel sujet souhaitez-vous proposer pour la prochaine rencontre de redevabilité ?");
     if (sujet && sujet.trim() !== "") {
@@ -432,165 +395,46 @@ function exportReport(type, period = 'all') {
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         const colors = { primary: '#2D7A3E', secondary: '#4CAF50', accent: '#1B5E20', text: '#333333', light: '#E8F5E9' };
-        
         let filtered = [...app.reports];
         const now = new Date();
         const m = now.getMonth(), y = now.getFullYear();
-        
         if (period === 'month') filtered = filtered.filter(r => new Date(r.date).getMonth() === m && new Date(r.date).getFullYear() === y);
         else if (period === 'quarter') { const qs = m - (m % 3); filtered = filtered.filter(r => { const d = new Date(r.date); return d.getMonth() >= qs && d.getMonth() < qs + 3 && d.getFullYear() === y; }); }
         else if (period === 'year') filtered = filtered.filter(r => new Date(r.date).getFullYear() === y);
-        
         filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        const stats = {
-            total: filtered.length,
-            resolved: filtered.filter(r => r.status === 'resolved' || r.status === 'Résolu').length,
-            progress: filtered.filter(r => r.status === 'progress' || r.status === 'En cours').length,
-            pending: filtered.filter(r => r.status === 'pending' || r.status === 'En attente').length
-        };
-        
-        const titles = { 
-            'month': `Rapport Mensuel - ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, 
-            'quarter': 'Rapport Trimestriel', 
-            'year': `Rapport Annuel ${y}`, 
-            'all': 'Rapport Complet' 
-        };
+        const stats = { total: filtered.length, resolved: filtered.filter(r => r.status === 'resolved' || r.status === 'Résolu').length, progress: filtered.filter(r => r.status === 'progress' || r.status === 'En cours').length, pending: filtered.filter(r => r.status === 'pending' || r.status === 'En attente').length };
+        const titles = { 'month': `Rapport Mensuel - ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`, 'quarter': 'Rapport Trimestriel', 'year': `Rapport Annuel ${y}`, 'all': 'Rapport Complet' };
 
-        doc.setFillColor(colors.primary);
-        doc.circle(35, 35, 20, 'F');
-        doc.setTextColor(255, 255, 255);
-        doc.setFontSize(24); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.text('Avé', 28, 32);
-        doc.setFontSize(18); 
-        doc.text('2', 47, 38);
-        
-        doc.setTextColor(colors.primary);
-        doc.setFontSize(24); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.text('MPC-REDEVABILITÉ', 105, 25, { align: 'center' });
-        
-        doc.setFontSize(14); 
-        doc.setFont('helvetica', 'normal'); 
-        doc.setTextColor(colors.text); 
-        doc.text('Mécanismes de Participation Citoyenne', 105, 33, { align: 'center' });
-        
-        doc.setFontSize(16); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.setTextColor(colors.accent); 
-        doc.text('Commune d\'Avé 2', 105, 45, { align: 'center' });
-        
-        doc.setFontSize(12); 
-        doc.setFont('helvetica', 'normal'); 
-        doc.text('(Aképé - Noépé - Badja)', 105, 52, { align: 'center' });
-        
-        doc.setDrawColor(colors.primary); 
-        doc.setLineWidth(1); 
-        doc.line(15, 60, 195, 60);
-        
-        doc.setFontSize(18); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.text(titles[period], 105, 75, { align: 'center' });
-        
-        doc.setFontSize(11); 
-        doc.setFont('helvetica', 'italic'); 
-        doc.setTextColor(100); 
-        doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`, 105, 85, { align: 'center' });
+        doc.setFillColor(colors.primary); doc.circle(35, 35, 20, 'F');
+        doc.setTextColor(255, 255, 255); doc.setFontSize(24); doc.setFont('helvetica', 'bold'); doc.text('Avé', 28, 32); doc.setFontSize(18); doc.text('2', 47, 38);
+        doc.setTextColor(colors.primary); doc.setFontSize(24); doc.setFont('helvetica', 'bold'); doc.text('MPC-REDEVABILITÉ', 105, 25, { align: 'center' });
+        doc.setFontSize(14); doc.setFont('helvetica', 'normal'); doc.setTextColor(colors.text); doc.text('Mécanismes de Participation Citoyenne', 105, 33, { align: 'center' });
+        doc.setFontSize(16); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.accent); doc.text('Commune d\'Avé 2', 105, 45, { align: 'center' });
+        doc.setFontSize(12); doc.setFont('helvetica', 'normal'); doc.text('(Aképé - Noépé - Badja)', 105, 52, { align: 'center' });
+        doc.setDrawColor(colors.primary); doc.setLineWidth(1); doc.line(15, 60, 195, 60);
+        doc.setFontSize(18); doc.setFont('helvetica', 'bold'); doc.text(titles[period], 105, 75, { align: 'center' });
+        doc.setFontSize(11); doc.setFont('helvetica', 'italic'); doc.setTextColor(100); doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}`, 105, 85, { align: 'center' });
 
-        doc.addPage();
-        doc.setFontSize(20); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.setTextColor(colors.primary); 
-        doc.text('VUE D\'ENSEMBLE', 105, 20, { align: 'center' });
-        
-        const statsData = [
-            { label: 'Total des signalements', value: stats.total, color: colors.primary },
-            { label: 'En attente', value: stats.pending, color: '#F59E0B' },
-            { label: 'En cours de traitement', value: stats.progress, color: '#3B82F6' },
-            { label: 'Résolus', value: stats.resolved, color: colors.secondary }
-        ];
-        
+        doc.addPage(); doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.primary); doc.text('VUE D\'ENSEMBLE', 105, 20, { align: 'center' });
+        const statsData = [{ label: 'Total des signalements', value: stats.total, color: colors.primary }, { label: 'En attente', value: stats.pending, color: '#F59E0B' }, { label: 'En cours de traitement', value: stats.progress, color: '#3B82F6' }, { label: 'Résolus', value: stats.resolved, color: colors.secondary }];
         let yPos = 35;
-        statsData.forEach(stat => {
-            doc.setFillColor(stat.color);
-            doc.rect(15, yPos, 180, 25, 'F');
-            doc.setTextColor(255, 255, 255);
-            doc.setFontSize(14); 
-            doc.setFont('helvetica', 'normal'); 
-            doc.text(stat.label, 25, yPos + 15);
-            doc.setFontSize(20); 
-            doc.setFont('helvetica', 'bold'); 
-            doc.text(stat.value.toString(), 180, yPos + 16, { align: 'right' });
-            yPos += 35;
-        });
-        
+        statsData.forEach(stat => { doc.setFillColor(stat.color); doc.rect(15, yPos, 180, 25, 'F'); doc.setTextColor(255, 255, 255); doc.setFontSize(14); doc.setFont('helvetica', 'normal'); doc.text(stat.label, 25, yPos + 15); doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.text(stat.value.toString(), 180, yPos + 16, { align: 'right' }); yPos += 35; });
         const rate = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0;
-        doc.setFontSize(14); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.setTextColor(colors.primary); 
-        doc.text(`Taux de résolution : ${rate}%`, 15, yPos + 10);
-        doc.setFillColor(colors.light); 
-        doc.rect(15, yPos + 15, 180, 12, 'F');
-        doc.setFillColor(colors.secondary); 
-        doc.rect(15, yPos + 15, (rate * 180) / 100, 12, 'F');
-        doc.setDrawColor(colors.primary); 
-        doc.setLineWidth(0.5); 
-        doc.rect(15, yPos + 15, 180, 12, 'S');
+        doc.setFontSize(14); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.primary); doc.text(`Taux de résolution : ${rate}%`, 15, yPos + 10);
+        doc.setFillColor(colors.light); doc.rect(15, yPos + 15, 180, 12, 'F'); doc.setFillColor(colors.secondary); doc.rect(15, yPos + 15, (rate * 180) / 100, 12, 'F'); doc.setDrawColor(colors.primary); doc.setLineWidth(0.5); doc.rect(15, yPos + 15, 180, 12, 'S');
 
-        doc.addPage();
-        doc.setFontSize(20); 
-        doc.setFont('helvetica', 'bold'); 
-        doc.setTextColor(colors.primary); 
-        doc.text('DÉTAIL DES SIGNALEMENTS', 105, 20, { align: 'center' });
-        
-        const tableData = filtered.map(r => [
-            r.id, r.date,
-            (MPC_DATA.categories[r.category] || { label: r.category }).label,
-            r.title.substring(0, 35) + (r.title.length > 35 ? '...' : ''),
-            r.location.substring(0, 25) + (r.location.length > 25 ? '...' : ''),
-            app.getStatusLabel(r.status)
-        ]);
-        
-        doc.autoTable({
-            startY: 30,
-            head: [['ID', 'Date', 'Catégorie', 'Titre', 'Lieu', 'Statut']],
-            body: tableData,
-            theme: 'striped',
-            headStyles: { fillColor: colors.primary, textColor: 255, fontStyle: 'bold', fontSize: 10 },
-            bodyStyles: { fontSize: 9, textColor: colors.text },
-            alternateRowStyles: { fillColor: colors.light },
-            // 🛑 CORRECTION : Largeurs réduites pour éviter l'avertissement de dépassement de page
-            columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 22 }, 2: { cellWidth: 28 }, 3: { cellWidth: 40 }, 4: { cellWidth: 32 }, 5: { cellWidth: 20 } },
-            didParseCell: function(data) {
-                if (data.section === 'body' && data.column.index === 5) {
-                    if (data.cell.raw === 'Résolu') { data.cell.styles.textColor = '#10B981'; data.cell.styles.fontStyle = 'bold'; }
-                    else if (data.cell.raw === 'En cours') data.cell.styles.textColor = '#3B82F6';
-                    else if (data.cell.raw === 'En attente') data.cell.styles.textColor = '#F59E0B';
-                }
-            }
-        });
-
+        doc.addPage(); doc.setFontSize(20); doc.setFont('helvetica', 'bold'); doc.setTextColor(colors.primary); doc.text('DÉTAIL DES SIGNALEMENTS', 105, 20, { align: 'center' });
+        const tableData = filtered.map(r => [r.id, r.date, (MPC_DATA.categories[r.category] || { label: r.category }).label, r.title.substring(0, 35) + (r.title.length > 35 ? '...' : ''), r.location.substring(0, 25) + (r.location.length > 25 ? '...' : ''), app.getStatusLabel(r.status)]);
+        doc.autoTable({ startY: 30, head: [['ID', 'Date', 'Catégorie', 'Titre', 'Lieu', 'Statut']], body: tableData, theme: 'striped', headStyles: { fillColor: colors.primary, textColor: 255, fontStyle: 'bold', fontSize: 10 }, bodyStyles: { fontSize: 9, textColor: colors.text }, alternateRowStyles: { fillColor: colors.light }, columnStyles: { 0: { cellWidth: 18 }, 1: { cellWidth: 22 }, 2: { cellWidth: 28 }, 3: { cellWidth: 40 }, 4: { cellWidth: 32 }, 5: { cellWidth: 20 } }, didParseCell: function(data) { if (data.section === 'body' && data.column.index === 5) { if (data.cell.raw === 'Résolu') { data.cell.styles.textColor = '#10B981'; data.cell.styles.fontStyle = 'bold'; } else if (data.cell.raw === 'En cours') data.cell.styles.textColor = '#3B82F6'; else if (data.cell.raw === 'En attente') data.cell.styles.textColor = '#F59E0B'; } } });
         const pages = doc.internal.getNumberOfPages();
-        for (let i = 1; i <= pages; i++) {
-            doc.setPage(i);
-            doc.setFontSize(9); 
-            doc.setTextColor(100);
-            doc.text(`Page ${i} sur ${pages}`, 105, 285, { align: 'center' });
-            doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285);
-            doc.text('Contact: +228 91 36 66 25', 140, 285);
-        }
-        
+        for (let i = 1; i <= pages; i++) { doc.setPage(i); doc.setFontSize(9); doc.setTextColor(100); doc.text(`Page ${i} sur ${pages}`, 105, 285, { align: 'center' }); doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285); doc.text('Contact: +228 91 36 66 25', 140, 285); }
         doc.save(`Rapport_MPC_Ave2_${period}_${now.toISOString().split('T')[0]}.pdf`);
-        
     } else if (type === 'csv') {
         closeExportModal();
         const csv = [['ID', 'Catégorie', 'Titre', 'Description', 'Lieu', 'Statut', 'Date', 'Agent'], ...app.reports.map(r => [r.id, (MPC_DATA.categories[r.category] || {label: r.category}).label, r.title, r.description, r.location, app.getStatusLabel(r.status), r.date, r.agent])].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
         const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url; a.download = `MPC_Rapport_Ave2_${new Date().toISOString().split('T')[0]}.csv`;
-        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        const a = document.createElement('a'); a.href = url; a.download = `MPC_Rapport_Ave2_${new Date().toISOString().split('T')[0]}.csv`; document.body.appendChild(a); a.click(); document.body.removeChild(a);
     }
 }
 

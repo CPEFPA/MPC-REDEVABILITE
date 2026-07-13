@@ -6,10 +6,41 @@
     <title>MPC-REDEVABILITÉ | Commune d'Avé 2</title>
     <link rel="stylesheet" href="css/style.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Leaflet CSS pour la carte -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 <body>
+    <!-- ========================================== -->
+    <!-- PORTAIL D'ACCÈS (NOUVEAU) -->
+    <!-- ========================================== -->
+    <div id="access-portal" class="access-portal">
+        <div class="portal-card">
+            <div class="portal-logo">
+                <i class="fas fa-hand-holding-heart"></i>
+            </div>
+            <h1>MPC-REDEVABILITÉ</h1>
+            <p class="portal-subtitle">Commune d'Avé 2 (Aképé, Noépé, Badja)</p>
+            <p class="portal-desc">Veuillez choisir votre espace de connexion :</p>
+            
+            <div class="portal-buttons">
+                <button class="portal-btn btn-citoyen" onclick="selectRole('citoyen')">
+                    <i class="fas fa-user"></i> 
+                    <div>
+                        <strong>Espace Citoyen</strong>
+                        <small>Signaler et suivre mes demandes</small>
+                    </div>
+                </button>
+                <button class="portal-btn btn-admin" onclick="selectRole('admin')">
+                    <i class="fas fa-user-shield"></i>
+                    <div>
+                        <strong>Espace Administration</strong>
+                        <small>Réservé aux agents et décideurs</small>
+                    </div>
+                </button>
+            </div>
+            <p class="portal-footer">Projet pilote de gouvernance locale - 2026</p>
+        </div>
+    </div>
+
     <!-- HEADER -->
     <header class="header">
         <div class="container header-content">
@@ -21,17 +52,21 @@
                 </div>
             </div>
             <nav class="nav">
-                <button class="nav-btn active" data-view="dashboard">
+                <button id="nav-dashboard" class="nav-btn active" data-view="dashboard">
                     <i class="fas fa-chart-line"></i> Tableau de bord
                 </button>
-                <button class="nav-btn" data-view="report">
+                <button id="nav-report" class="nav-btn" data-view="report">
                     <i class="fas fa-bullhorn"></i> Signaler
                 </button>
-                <button class="nav-btn" data-view="list">
+                <button id="nav-list" class="nav-btn" data-view="list">
                     <i class="fas fa-list"></i> Suivi
                 </button>
-                <button class="nav-btn" data-view="agent">
+                <button id="nav-agent" class="nav-btn" data-view="agent">
                     <i class="fas fa-user-shield"></i> Agent
+                </button>
+                <!-- Bouton de déconnexion (visible uniquement pour l'admin) -->
+                <button id="btn-logout" class="nav-btn" onclick="logout()" style="display: none; margin-left: auto; background: #ef4444; color: white;">
+                    <i class="fas fa-sign-out-alt"></i> Déconnexion
                 </button>
             </nav>
         </div>
@@ -70,7 +105,6 @@
                 </div>
             </div>
 
-            <!-- CARTE INTERACTIVE -->
             <div class="card">
                 <h3><i class="fas fa-map-marked-alt"></i> Carte des signalements par canton</h3>
                 <div id="map" style="height: 400px; border-radius: 8px; z-index: 1;"></div>
@@ -97,7 +131,6 @@
                             <p>10h00 - Mairie d'Avé 2 / Place publique d'Aképé</p>
                         </div>
                     </div>
-                    <!-- ✅ CORRECTION : Ajout de onclick="proposerSujet()" -->
                     <button class="btn btn-primary" onclick="proposerSujet()">
                         <i class="fas fa-plus"></i> Proposer un sujet
                     </button>
@@ -113,9 +146,7 @@
                 
                 <form id="report-form" class="report-form">
                     <div class="form-group">
-                        <label for="category">
-                            <i class="fas fa-tags"></i> Catégorie *
-                        </label>
+                        <label for="category"><i class="fas fa-tags"></i> Catégorie *</label>
                         <select id="category" required>
                             <option value="">-- Choisir une catégorie --</option>
                             <option value="eau">💧 Eau potable</option>
@@ -127,51 +158,35 @@
                             <option value="autre">📋 Autre</option>
                         </select>
                     </div>
-
                     <div class="form-group">
-                        <label for="title">
-                            <i class="fas fa-heading"></i> Titre du signalement *
-                        </label>
+                        <label for="title"><i class="fas fa-heading"></i> Titre du signalement *</label>
                         <input type="text" id="title" placeholder="Ex: Fuite d'eau au marché d'Aképé" required maxlength="100">
                     </div>
-
                     <div class="form-group">
-                        <label for="description">
-                            <i class="fas fa-align-left"></i> Description *
-                        </label>
+                        <label for="description"><i class="fas fa-align-left"></i> Description *</label>
                         <textarea id="description" rows="4" placeholder="Décrivez le problème en détail..." required maxlength="500"></textarea>
                         <small id="char-count">0 / 500</small>
                     </div>
-
                     <div class="form-group">
-                        <label for="location">
-                            <i class="fas fa-map-marker-alt"></i> Lieu / Canton *
-                        </label>
+                        <label for="location"><i class="fas fa-map-marker-alt"></i> Lieu / Canton *</label>
                         <input type="text" id="location" placeholder="Ex: Canton de Noépé, près de l'école" required>
                     </div>
-
                     <div class="form-row">
                         <div class="form-group">
-                            <label for="name">
-                                <i class="fas fa-user"></i> Nom (optionnel)
-                            </label>
+                            <label for="name"><i class="fas fa-user"></i> Nom (optionnel)</label>
                             <input type="text" id="name" placeholder="Votre nom">
                         </div>
                         <div class="form-group">
-                            <label for="phone">
-                                <i class="fas fa-phone"></i> Téléphone (optionnel)
-                            </label>
+                            <label for="phone"><i class="fas fa-phone"></i> Téléphone (optionnel)</label>
                             <input type="tel" id="phone" placeholder="+228 XX XX XX XX">
                         </div>
                     </div>
-
                     <div class="form-group checkbox-group">
                         <label>
                             <input type="checkbox" id="anonymous">
                             <i class="fas fa-user-secret"></i> Soumettre anonymement
                         </label>
                     </div>
-
                     <button type="submit" class="btn btn-primary btn-large">
                         <i class="fas fa-paper-plane"></i> Envoyer le signalement
                     </button>
@@ -185,7 +200,7 @@
                 <div class="list-header">
                     <h2><i class="fas fa-list"></i> Suivi des signalements (Avé 2)</h2>
                     <div class="filters">
-                        <input type="text" id="search-input" placeholder="🔍 Rechercher...">
+                        <input type="text" id="search-input" placeholder=" Rechercher...">
                         <select id="filter-status">
                             <option value="all">Tous les statuts</option>
                             <option value="pending">En attente</option>
@@ -214,15 +229,9 @@
                 <p class="form-intro">Gérez les signalements des cantons d'Aképé, Noépé et Badja, mettez à jour les statuts et rendez compte.</p>
                 
                 <div class="agent-tabs">
-                    <button class="agent-tab active" data-tab="manage">
-                        <i class="fas fa-tasks"></i> Gérer
-                    </button>
-                    <button class="agent-tab" data-tab="offline">
-                        <i class="fas fa-wifi"></i> Mode Hors-ligne
-                    </button>
-                    <button class="agent-tab" data-tab="export">
-                        <i class="fas fa-file-export"></i> Rapports
-                    </button>
+                    <button class="agent-tab active" data-tab="manage"><i class="fas fa-tasks"></i> Gérer</button>
+                    <button class="agent-tab" data-tab="offline"><i class="fas fa-wifi"></i> Mode Hors-ligne</button>
+                    <button class="agent-tab" data-tab="export"><i class="fas fa-file-export"></i> Rapports</button>
                 </div>
 
                 <div id="tab-manage" class="agent-content active">
@@ -238,9 +247,7 @@
                             <span class="status-dot offline"></span>
                             <span id="offline-count">0 signalement(s) en attente de synchronisation</span>
                         </div>
-                        <button class="btn btn-primary" id="sync-btn">
-                            <i class="fas fa-sync"></i> Synchroniser maintenant
-                        </button>
+                        <button class="btn btn-primary" id="sync-btn"><i class="fas fa-sync"></i> Synchroniser maintenant</button>
                     </div>
                 </div>
 
@@ -250,18 +257,13 @@
                             <i class="fas fa-file-pdf"></i>
                             <h4>Rapport PDF Professionnel</h4>
                             <p>Générer un rapport avec statistiques et tableau des signalements pour la redevabilité</p>
-                            <!-- ✅ CORRECTION : Fonction showExportModal() et texte nettoyé -->
-                            <button class="btn btn-primary" onclick="showExportModal()">
-                                <i class="fas fa-download"></i> Générer PDF
-                            </button>
+                            <button class="btn btn-primary" onclick="showExportModal()"><i class="fas fa-download"></i> Générer PDF</button>
                         </div>
                         <div class="export-card">
                             <i class="fas fa-file-excel"></i>
                             <h4>Données brutes</h4>
                             <p>Exporter toutes les données en format CSV pour analyse</p>
-                            <button class="btn btn-secondary" onclick="exportReport('csv')">
-                                <i class="fas fa-download"></i> Télécharger CSV
-                            </button>
+                            <button class="btn btn-secondary" onclick="exportReport('csv')"><i class="fas fa-download"></i> Télécharger CSV</button>
                         </div>
                     </div>
                 </div>
@@ -279,12 +281,8 @@
                 <small>Numéro de suivi :</small>
                 <strong id="tracking-number">MPC-000000</strong>
             </div>
-            <p class="sms-info">
-                <i class="fas fa-sms"></i> Un SMS de confirmation vous sera envoyé.
-            </p>
-            <button class="btn btn-primary" onclick="closeModal()">
-                Fermer
-            </button>
+            <p class="sms-info"><i class="fas fa-sms"></i> Un SMS de confirmation vous sera envoyé.</p>
+            <button class="btn btn-primary" onclick="closeModal()">Fermer</button>
         </div>
     </div>
 
@@ -294,44 +292,13 @@
             <i class="fas fa-file-pdf" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
             <h2 style="color: var(--primary); margin-bottom: 0.5rem;">Générer un rapport PDF</h2>
             <p style="color: var(--text-light); margin-bottom: 1.5rem;">Sélectionnez la période à exporter :</p>
-            
             <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
-                <button onclick="exportReport('pdf', 'month')" class="btn" style="background: var(--primary); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
-                    <i class="fas fa-calendar-month" style="margin-right: 10px;"></i> 
-                    <div>
-                        <strong>Ce mois-ci</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Signalements du mois en cours</div>
-                    </div>
-                </button>
-                
-                <button onclick="exportReport('pdf', 'quarter')" class="btn" style="background: var(--success); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
-                    <i class="fas fa-calendar-alt" style="margin-right: 10px;"></i> 
-                    <div>
-                        <strong>Ce trimestre</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">3 derniers mois</div>
-                    </div>
-                </button>
-                
-                <button onclick="exportReport('pdf', 'year')" class="btn" style="background: var(--primary-dark); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
-                    <i class="fas fa-calendar-year" style="margin-right: 10px;"></i> 
-                    <div>
-                        <strong>Cette année</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Année en cours</div>
-                    </div>
-                </button>
-                
-                <button onclick="exportReport('pdf', 'all')" class="btn" style="background: var(--text-light); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
-                    <i class="fas fa-database" style="margin-right: 10px;"></i> 
-                    <div>
-                        <strong>Tous les signalements</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Historique complet</div>
-                    </div>
-                </button>
+                <button onclick="exportReport('pdf', 'month')" class="btn" style="background: var(--primary); color: white; padding: 1rem; text-align: left; width: 100%;"><i class="fas fa-calendar-month" style="margin-right: 10px;"></i> <strong>Ce mois-ci</strong></button>
+                <button onclick="exportReport('pdf', 'quarter')" class="btn" style="background: var(--success); color: white; padding: 1rem; text-align: left; width: 100%;"><i class="fas fa-calendar-alt" style="margin-right: 10px;"></i> <strong>Ce trimestre</strong></button>
+                <button onclick="exportReport('pdf', 'year')" class="btn" style="background: var(--primary-dark); color: white; padding: 1rem; text-align: left; width: 100%;"><i class="fas fa-calendar-year" style="margin-right: 10px;"></i> <strong>Cette année</strong></button>
+                <button onclick="exportReport('pdf', 'all')" class="btn" style="background: var(--text-light); color: white; padding: 1rem; text-align: left; width: 100%;"><i class="fas fa-database" style="margin-right: 10px;"></i> <strong>Tous les signalements</strong></button>
             </div>
-            
-            <button onclick="closeExportModal()" class="btn" style="background: var(--bg); color: var(--text); width: 100%; border: 1px solid var(--border); justify-content: center;">
-                <i class="fas fa-times" style="margin-right: 8px;"></i> Annuler
-            </button>
+            <button onclick="closeExportModal()" class="btn" style="background: var(--bg); color: var(--text); width: 100%; border: 1px solid var(--border);"><i class="fas fa-times" style="margin-right: 8px;"></i> Annuler</button>
         </div>
     </div>
 
@@ -340,65 +307,43 @@
         <div id="contact-bubble" class="contact-bubble">
             <div class="bubble-header">
                 <div class="bubble-header-content">
-                    <div class="coordinator-avatar">
-                        <i class="fas fa-user-tie"></i>
-                    </div>
+                    <div class="coordinator-avatar"><i class="fas fa-user-tie"></i></div>
                     <div class="coordinator-info">
                         <h4>Bureau du Citoyen</h4>
                         <p>Commune d'Avé 2</p>
-                        <span class="online-status">
-                            <span class="status-dot-online"></span>
-                            En ligne
-                        </span>
+                        <span class="online-status"><span class="status-dot-online"></span> En ligne</span>
                     </div>
                 </div>
-                <button class="close-bubble" onclick="toggleBubble()">
-                    <i class="fas fa-times"></i>
-                </button>
+                <button class="close-bubble" onclick="toggleBubble()"><i class="fas fa-times"></i></button>
             </div>
-            
             <div class="bubble-body">
                 <div class="welcome-message">
                     <div class="message-bubble left">
                         <p>Bonjour 👋</p>
                         <p>Je suis le <strong>Coordinateur du Bureau du Citoyen</strong> de la commune d'Avé 2.</p>
                         <p>Comment puis-je vous aider aujourd'hui ?</p>
-                        <small>📞 +228 91 36 66 25</small>
+                        <small> +228 91 36 66 25</small>
                     </div>
                 </div>
-                
                 <div class="quick-actions">
                     <p class="quick-title">Choisissez un moyen de contact :</p>
-                    <a href="https://wa.me/22891366625?text=Bonjour%20Coordinateur%2C%20je%20souhaite%20des%20informations%20sur%20MPC-REDEVABILIT%C3%89" target="_blank" class="action-btn whatsapp">
-                        <i class="fab fa-whatsapp"></i><span>WhatsApp</span>
-                    </a>
-                    <a href="tel:+22891366625" class="action-btn call">
-                        <i class="fas fa-phone"></i><span>Appeler</span>
-                    </a>
-                    <a href="sms:+22891366625?body=Bonjour%20Coordinateur%2C%20je%20souhaite%20des%20informations." class="action-btn sms">
-                        <i class="fas fa-sms"></i><span>SMS</span>
-                    </a>
+                    <a href="https://wa.me/22891366625?text=Bonjour%20Coordinateur" target="_blank" class="action-btn whatsapp"><i class="fab fa-whatsapp"></i><span>WhatsApp</span></a>
+                    <a href="tel:+22891366625" class="action-btn call"><i class="fas fa-phone"></i><span>Appeler</span></a>
+                    <a href="sms:+22891366625?body=Bonjour" class="action-btn sms"><i class="fas fa-sms"></i><span>SMS</span></a>
                 </div>
             </div>
-            
-            <div class="bubble-footer">
-                <small><i class="fas fa-info-circle"></i> Disponible du Lundi au Vendredi - 8h à 17h</small>
-            </div>
+            <div class="bubble-footer"><small><i class="fas fa-info-circle"></i> Disponible du Lundi au Vendredi - 8h à 17h</small></div>
         </div>
-        
         <button id="bubble-toggle" class="bubble-toggle" onclick="toggleBubble()" title="Contacter le Coordinateur">
-            <i class="fas fa-headset"></i>
-            <span class="notification-badge">1</span>
+            <i class="fas fa-headset"></i><span class="notification-badge">1</span>
         </button>
     </div>
 
     <!-- SCRIPTS -->
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
-    <!-- Librairies pour l'export PDF -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
-    <!-- Leaflet JS pour la carte interactive -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </body>
 </html>
