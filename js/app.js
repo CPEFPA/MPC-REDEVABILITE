@@ -359,4 +359,50 @@ function exportReport(type) {
 let app;
 document.addEventListener('DOMContentLoaded', () => {
     app = new MPCApp();
+
+    // ========================================
+// GESTION DE LA BULLE DE CONTACT
+// ========================================
+
+function toggleBubble() {
+    const bubble = document.getElementById('contact-bubble');
+    const toggle = document.getElementById('bubble-toggle');
+    const badge = toggle.querySelector('.notification-badge');
+    
+    bubble.classList.toggle('active');
+    
+    // Retirer le badge de notification après le premier clic
+    if (badge && bubble.classList.contains('active')) {
+        setTimeout(() => {
+            badge.style.display = 'none';
+        }, 500);
+    }
+    
+    // Changer l'icône du bouton selon l'état
+    const icon = toggle.querySelector('i');
+    if (bubble.classList.contains('active')) {
+        icon.className = 'fas fa-times';
+    } else {
+        icon.className = 'fas fa-headset';
+    }
+}
+
+// Fermer la bulle en cliquant en dehors
+document.addEventListener('click', function(event) {
+    const container = document.querySelector('.contact-bubble-container');
+    const bubble = document.getElementById('contact-bubble');
+    
+    if (container && !container.contains(event.target) && bubble.classList.contains('active')) {
+        toggleBubble();
+    }
+});
+
+// Afficher automatiquement la bulle après 5 secondes (optionnel)
+setTimeout(() => {
+    const toggle = document.getElementById('bubble-toggle');
+    if (toggle && !sessionStorage.getItem('bubbleShown')) {
+        toggle.style.animation = 'pulse 1.5s infinite, bounce 1s infinite';
+        sessionStorage.setItem('bubbleShown', 'true');
+    }
+}, 5000);
 });
