@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPC-REDEVABILITÉ | Agoè-Nyivé 3</title>
+    <link rel="stylesheet" href="css/style.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- HEADER -->
+    <header class="header">
+        <div class="container header-content">
+            <div class="logo">
+                <i class="fas fa-hand-holding-heart"></i>
+                <div>
+                    <h1>MPC-REDEVABILITÉ</h1>
+                    <p class="subtitle">Commune d'Agoè-Nyivé 3 / Togblékopé-Akoin</p>
+                </div>
+            </div>
+            <nav class="nav">
+                <button class="nav-btn active" data-view="dashboard">
+                    <i class="fas fa-chart-line"></i> Tableau de bord
+                </button>
+                <button class="nav-btn" data-view="report">
+                    <i class="fas fa-bullhorn"></i> Signaler
+                </button>
+                <button class="nav-btn" data-view="list">
+                    <i class="fas fa-list"></i> Suivi
+                </button>
+                <button class="nav-btn" data-view="agent">
+                    <i class="fas fa-user-shield"></i> Agent
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main class="container main">
+        
+        <!-- VUE : TABLEAU DE BORD -->
+        <section id="view-dashboard" class="view active">
+            <div class="hero">
+                <h2><i class="fas fa-users"></i> Participation Citoyenne en Action</h2>
+                <p>Ensemble, améliorons la qualité des services publics de base dans notre commune.</p>
+            </div>
+
+            <div class="stats-grid">
+                <div class="stat-card stat-total">
+                    <i class="fas fa-inbox"></i>
+                    <div class="stat-value" id="stat-total">0</div>
+                    <div class="stat-label">Signalements totaux</div>
+                </div>
+                <div class="stat-card stat-resolved">
+                    <i class="fas fa-check-circle"></i>
+                    <div class="stat-value" id="stat-resolved">0</div>
+                    <div class="stat-label">Résolus</div>
+                </div>
+                <div class="stat-card stat-progress">
+                    <i class="fas fa-spinner"></i>
+                    <div class="stat-value" id="stat-progress">0</div>
+                    <div class="stat-label">En cours</div>
+                </div>
+                <div class="stat-card stat-pending">
+                    <i class="fas fa-clock"></i>
+                    <div class="stat-value" id="stat-pending">0</div>
+                    <div class="stat-label">En attente</div>
+                </div>
+            </div>
+
+            <div class="dashboard-grid">
+                <div class="card">
+                    <h3><i class="fas fa-chart-pie"></i> Répartition par catégorie</h3>
+                    <div id="categories-chart" class="chart-container"></div>
+                </div>
+                <div class="card">
+                    <h3><i class="fas fa-fire"></i> Signalements récents</h3>
+                    <div id="recent-reports" class="reports-list"></div>
+                </div>
+            </div>
+
+            <div class="card">
+                <h3><i class="fas fa-calendar-check"></i> Prochaine rencontre de redevabilité</h3>
+                <div class="meeting-info">
+                    <div class="meeting-date">
+                        <i class="fas fa-calendar-alt"></i>
+                        <div>
+                            <strong>Samedi 26 Juillet 2026</strong>
+                            <p>10h00 - Salle communale de Togblékopé</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary">
+                        <i class="fas fa-plus"></i> Proposer un sujet
+                    </button>
+                </div>
+            </div>
+        </section>
+
+        <!-- VUE : SIGNALER UNE PLAinte -->
+        <section id="view-report" class="view">
+            <div class="card form-card">
+                <h2><i class="fas fa-bullhorn"></i> Signaler une préoccupation</h2>
+                <p class="form-intro">Votre voix compte. Remplissez ce formulaire pour alerter les services compétents.</p>
+                
+                <form id="report-form" class="report-form">
+                    <div class="form-group">
+                        <label for="category">
+                            <i class="fas fa-tags"></i> Catégorie *
+                        </label>
+                        <select id="category" required>
+                            <option value="">-- Choisir une catégorie --</option>
+                            <option value="eau">💧 Eau potable</option>
+                            <option value="assainissement">🗑️ Assainissement / Déchets</option>
+                            <option value="voirie">🛣️ Voirie / Routes</option>
+                            <option value="sante">🏥 Santé</option>
+                            <option value="education">📚 Éducation</option>
+                            <option value="securite">🚨 Sécurité</option>
+                            <option value="autre">📋 Autre</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="title">
+                            <i class="fas fa-heading"></i> Titre du signalement *
+                        </label>
+                        <input type="text" id="title" placeholder="Ex: Fuite d'eau rue principale" required maxlength="100">
+                    </div>
+
+                    <div class="form-group">
+                        <label for="description">
+                            <i class="fas fa-align-left"></i> Description *
+                        </label>
+                        <textarea id="description" rows="4" placeholder="Décrivez le problème en détail..." required maxlength="500"></textarea>
+                        <small id="char-count">0 / 500</small>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="location">
+                            <i class="fas fa-map-marker-alt"></i> Lieu / Quartier *
+                        </label>
+                        <input type="text" id="location" placeholder="Ex: Quartier Akoin, près du marché" required>
+                    </div>
+
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="name">
+                                <i class="fas fa-user"></i> Nom (optionnel)
+                            </label>
+                            <input type="text" id="name" placeholder="Votre nom">
+                        </div>
+                        <div class="form-group">
+                            <label for="phone">
+                                <i class="fas fa-phone"></i> Téléphone (optionnel)
+                            </label>
+                            <input type="tel" id="phone" placeholder="+228 XX XX XX XX">
+                        </div>
+                    </div>
+
+                    <div class="form-group checkbox-group">
+                        <label>
+                            <input type="checkbox" id="anonymous">
+                            <i class="fas fa-user-secret"></i> Soumettre anonymement
+                        </label>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-large">
+                        <i class="fas fa-paper-plane"></i> Envoyer le signalement
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- VUE : LISTE DES SIGNALEMENTS -->
+        <section id="view-list" class="view">
+            <div class="card">
+                <div class="list-header">
+                    <h2><i class="fas fa-list"></i> Suivi des signalements</h2>
+                    <div class="filters">
+                        <input type="text" id="search-input" placeholder="🔍 Rechercher...">
+                        <select id="filter-status">
+                            <option value="all">Tous les statuts</option>
+                            <option value="pending">En attente</option>
+                            <option value="progress">En cours</option>
+                            <option value="resolved">Résolu</option>
+                        </select>
+                        <select id="filter-category">
+                            <option value="all">Toutes catégories</option>
+                            <option value="eau">Eau</option>
+                            <option value="assainissement">Assainissement</option>
+                            <option value="voirie">Voirie</option>
+                            <option value="sante">Santé</option>
+                            <option value="education">Éducation</option>
+                            <option value="securite">Sécurité</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="reports-container" class="reports-full-list"></div>
+            </div>
+        </section>
+
+        <!-- VUE : AGENT COMMUNAUTAIRE -->
+        <section id="view-agent" class="view">
+            <div class="card">
+                <h2><i class="fas fa-user-shield"></i> Espace Agent Communautaire</h2>
+                <p class="form-intro">Gérez les signalements, mettez à jour les statuts et rendez compte.</p>
+                
+                <div class="agent-tabs">
+                    <button class="agent-tab active" data-tab="manage">
+                        <i class="fas fa-tasks"></i> Gérer
+                    </button>
+                    <button class="agent-tab" data-tab="offline">
+                        <i class="fas fa-wifi"></i> Mode Hors-ligne
+                    </button>
+                    <button class="agent-tab" data-tab="export">
+                        <i class="fas fa-file-export"></i> Rapports
+                    </button>
+                </div>
+
+                <div id="tab-manage" class="agent-content active">
+                    <div id="agent-reports-list" class="reports-full-list"></div>
+                </div>
+
+                <div id="tab-offline" class="agent-content">
+                    <div class="offline-info">
+                        <i class="fas fa-cloud-download-alt"></i>
+                        <h3>Mode Hors-ligne activé</h3>
+                        <p>Les données collectées sans connexion seront synchronisées automatiquement dès que le réseau sera disponible.</p>
+                        <div class="offline-status">
+                            <span class="status-dot offline"></span>
+                            <span id="offline-count">0 signalement(s) en attente de synchronisation</span>
+                        </div>
+                        <button class="btn btn-primary" id="sync-btn">
+                            <i class="fas fa-sync"></i> Synchroniser maintenant
+                        </button>
+                    </div>
+                </div>
+
+                <div id="tab-export" class="agent-content">
+                    <div class="export-options">
+                        <div class="export-card">
+                            <i class="fas fa-file-pdf"></i>
+                            <h4>Rapport mensuel</h4>
+                            <p>Générer le rapport PDF pour la rencontre de redevabilité</p>
+                            <button class="btn btn-primary" onclick="exportReport('pdf')">
+                                <i class="fas fa-download"></i> Télécharger PDF
+                            </button>
+                        </div>
+                        <div class="export-card">
+                            <i class="fas fa-file-excel"></i>
+                            <h4>Données brutes</h4>
+                            <p>Exporter toutes les données en format CSV</p>
+                            <button class="btn btn-secondary" onclick="exportReport('csv')">
+                                <i class="fas fa-download"></i> Télécharger CSV
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- MODAL DE SUCCÈS -->
+    <div id="success-modal" class="modal">
+        <div class="modal-content">
+            <i class="fas fa-check-circle success-icon"></i>
+            <h2>Signalement envoyé !</h2>
+            <p>Votre signalement a bien été enregistré.</p>
+            <div class="tracking-code">
+                <small>Numéro de suivi :</small>
+                <strong id="tracking-number">MPC-000000</strong>
+            </div>
+            <p class="sms-info">
+                <i class="fas fa-sms"></i> Un SMS de confirmation vous sera envoyé.
+            </p>
+            <button class="btn btn-primary" onclick="closeModal()">
+                Fermer
+            </button>
+        </div>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="footer">
+        <div class="container">
+            <p>
+                <i class="fas fa-heart"></i> 
+                MPC-REDEVABILITÉ - Projet pilote de gouvernance locale
+            </p>
+            <p class="footer-sub">
+                Commune d'Agoè-Nyivé 3 / Togblékopé-Akoin | Togo - 2026
+            </p>
+        </div>
+    </footer>
+
+    <script src="js/data.js"></script>
+    <script src="js/app.js"></script>
+</body>
+</html>

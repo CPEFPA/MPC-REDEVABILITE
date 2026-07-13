@@ -1,0 +1,15 @@
+﻿.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/
+*.sublime-workspace
+*.sublime-project
+node_modules/
+.env
+.env.local
+*.tmp
+*.bak
+*.swp
+*~
+deploy_mpc.sh
