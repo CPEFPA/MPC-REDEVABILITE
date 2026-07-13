@@ -49,12 +49,12 @@
                 <div class="stat-card stat-total">
                     <i class="fas fa-inbox"></i>
                     <div class="stat-value" id="stat-total">0</div>
-                    <div class="stat-label">Signalements totaux</div>
+                    <div class="stat-label">Signalements actifs</div>
                 </div>
                 <div class="stat-card stat-resolved">
                     <i class="fas fa-check-circle"></i>
                     <div class="stat-value" id="stat-resolved">0</div>
-                    <div class="stat-label">Résolus</div>
+                    <div class="stat-label">Résolus (Historique)</div>
                 </div>
                 <div class="stat-card stat-progress">
                     <i class="fas fa-spinner"></i>
@@ -239,16 +239,16 @@
                     <div class="export-options">
                         <div class="export-card">
                             <i class="fas fa-file-pdf"></i>
-                            <h4>Rapport mensuel</h4>
-                            <p>Générer le rapport PDF pour la rencontre de redevabilité de la commune</p>
-                            <button class="btn btn-primary" onclick="exportReport('pdf')">
-                                <i class="fas fa-download"></i> Télécharger PDF
+                            <h4>Rapport PDF Professionnel</h4>
+                            <p>Générer un rapport avec statistiques et tableau des signalements pour la redevabilité</p>
+                            <button class="btn btn-primary" onclick="showExportModal()">
+                                <i class="fas fa-download"></i> Générer PDF
                             </button>
                         </div>
                         <div class="export-card">
                             <i class="fas fa-file-excel"></i>
                             <h4>Données brutes</h4>
-                            <p>Exporter toutes les données en format CSV</p>
+                            <p>Exporter toutes les données en format CSV pour analyse</p>
                             <button class="btn btn-secondary" onclick="exportReport('csv')">
                                 <i class="fas fa-download"></i> Télécharger CSV
                             </button>
@@ -278,22 +278,55 @@
         </div>
     </div>
 
-    <!-- FOOTER -->
-    <footer class="footer">
-        <div class="container">
-            <p>
-                <i class="fas fa-heart"></i> 
-                MPC-REDEVABILITÉ - Projet pilote de gouvernance locale
-            </p>
-            <p class="footer-sub">
-                Commune d'Avé 2 (Cantons d'Aképé, Noépé, Badja) | Togo - 2026
-            </p>
+    <!-- MODAL D'EXPORT PDF -->
+    <div id="export-modal" class="modal">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem;">
+            <i class="fas fa-file-pdf" style="font-size: 3rem; color: var(--primary); margin-bottom: 1rem;"></i>
+            <h2 style="color: var(--primary); margin-bottom: 0.5rem;">Générer un rapport PDF</h2>
+            <p style="color: var(--text-light); margin-bottom: 1.5rem;">Sélectionnez la période à exporter :</p>
+            
+            <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
+                <button onclick="exportReport('pdf', 'month')" class="btn" style="background: var(--primary); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
+                    <i class="fas fa-calendar-month" style="margin-right: 10px;"></i> 
+                    <div>
+                        <strong>Ce mois-ci</strong>
+                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Signalements du mois en cours</div>
+                    </div>
+                </button>
+                
+                <button onclick="exportReport('pdf', 'quarter')" class="btn" style="background: var(--success); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
+                    <i class="fas fa-calendar-alt" style="margin-right: 10px;"></i> 
+                    <div>
+                        <strong>Ce trimestre</strong>
+                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">3 derniers mois</div>
+                    </div>
+                </button>
+                
+                <button onclick="exportReport('pdf', 'year')" class="btn" style="background: var(--primary-dark); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
+                    <i class="fas fa-calendar-year" style="margin-right: 10px;"></i> 
+                    <div>
+                        <strong>Cette année</strong>
+                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Année en cours</div>
+                    </div>
+                </button>
+                
+                <button onclick="exportReport('pdf', 'all')" class="btn" style="background: var(--text-light); color: white; padding: 1rem; text-align: left; width: 100%; justify-content: flex-start;">
+                    <i class="fas fa-database" style="margin-right: 10px;"></i> 
+                    <div>
+                        <strong>Tous les signalements</strong>
+                        <div style="font-size: 0.85rem; opacity: 0.9; font-weight: normal;">Historique complet</div>
+                    </div>
+                </button>
+            </div>
+            
+            <button onclick="closeExportModal()" class="btn" style="background: var(--bg); color: var(--text); width: 100%; border: 1px solid var(--border); justify-content: center;">
+                <i class="fas fa-times" style="margin-right: 8px;"></i> Annuler
+            </button>
         </div>
-    </footer>
+    </div>
 
     <!-- BULLE DE CONTACT COORDINATEUR -->
     <div class="contact-bubble-container">
-        <!-- Bulle de discussion -->
         <div id="contact-bubble" class="contact-bubble">
             <div class="bubble-header">
                 <div class="bubble-header-content">
@@ -326,43 +359,34 @@
                 
                 <div class="quick-actions">
                     <p class="quick-title">Choisissez un moyen de contact :</p>
-                    
-                    <a href="https://wa.me/22891366625?text=Bonjour%20Coordinateur%2C%20je%20souhaite%20des%20informations%20sur%20MPC-REDEVABILIT%C3%89" 
-                       target="_blank" 
-                       class="action-btn whatsapp">
-                        <i class="fab fa-whatsapp"></i>
-                        <span>WhatsApp</span>
+                    <a href="https://wa.me/22891366625?text=Bonjour%20Coordinateur%2C%20je%20souhaite%20des%20informations%20sur%20MPC-REDEVABILIT%C3%89" target="_blank" class="action-btn whatsapp">
+                        <i class="fab fa-whatsapp"></i><span>WhatsApp</span>
                     </a>
-                    
                     <a href="tel:+22891366625" class="action-btn call">
-                        <i class="fas fa-phone"></i>
-                        <span>Appeler</span>
+                        <i class="fas fa-phone"></i><span>Appeler</span>
                     </a>
-                    
                     <a href="sms:+22891366625?body=Bonjour%20Coordinateur%2C%20je%20souhaite%20des%20informations." class="action-btn sms">
-                        <i class="fas fa-sms"></i>
-                        <span>SMS</span>
+                        <i class="fas fa-sms"></i><span>SMS</span>
                     </a>
                 </div>
             </div>
             
             <div class="bubble-footer">
-                <small>
-                    <i class="fas fa-info-circle"></i>
-                    Disponible du Lundi au Vendredi - 8h à 17h
-                </small>
+                <small><i class="fas fa-info-circle"></i> Disponible du Lundi au Vendredi - 8h à 17h</small>
             </div>
         </div>
         
-        <!-- Bouton flottant -->
         <button id="bubble-toggle" class="bubble-toggle" onclick="toggleBubble()" title="Contacter le Coordinateur">
             <i class="fas fa-headset"></i>
             <span class="notification-badge">1</span>
         </button>
     </div>
 
-    <!-- SCRIPTS (Placés à la fin pour de meilleures performances) -->
+    <!-- SCRIPTS -->
     <script src="js/data.js"></script>
     <script src="js/app.js"></script>
+    <!-- Librairies pour l'export PDF -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
 </body>
 </html>
