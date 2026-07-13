@@ -54,7 +54,6 @@ class MPCApp {
             console.log(`✅ ${this.reports.length} signalements chargés depuis le Sheet`);
         } catch (error) {
             console.error('Erreur de chargement:', error);
-            // En cas d'erreur, utiliser les données locales
             this.reports = MPC_DATA.initialReports;
         }
     }
@@ -226,12 +225,17 @@ class MPCApp {
         }
     }
 
+    // 🆕 TABLEAU DE BORD : Exclut les résolus de l'affichage principal
     renderDashboard() {
+        const activeReports = this.reports.filter(r => 
+            r.status !== 'resolved' && r.status !== 'Résolu'
+        );
+
         const stats = {
-            total: this.reports.length,
+            total: activeReports.length,
             resolved: this.reports.filter(r => r.status === 'resolved' || r.status === 'Résolu').length,
-            progress: this.reports.filter(r => r.status === 'progress' || r.status === 'En cours').length,
-            pending: this.reports.filter(r => r.status === 'pending' || r.status === 'En attente').length
+            progress: activeReports.filter(r => r.status === 'progress' || r.status === 'En cours').length,
+            pending: activeReports.filter(r => r.status === 'pending' || r.status === 'En attente').length
         };
 
         const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
@@ -240,16 +244,21 @@ class MPCApp {
         setEl('stat-progress', stats.progress);
         setEl('stat-pending', stats.pending);
 
-        this.renderCategoriesChart();
-        this.renderRecentReports();
+        this.renderCategoriesChart(activeReports);
+        this.renderRecentReports(activeReports);
     }
 
-    renderCategoriesChart() {
+    // 🆕 GRAPHIQUE : Exclut les résolus
+    renderCategoriesChart(reportsToDisplay = null) {
         const container = document.getElementById('categories-chart');
         if (!container) return;
 
+        const reports = reportsToDisplay || this.reports.filter(r => 
+            r.status !== 'resolved' && r.status !== 'Résolu'
+        );
+
         const counts = {};
-        this.reports.forEach(r => {
+        reports.forEach(r => {
             counts[r.category] = (counts[r.category] || 0) + 1;
         });
 
@@ -273,11 +282,16 @@ class MPCApp {
             }).join('');
     }
 
-    renderRecentReports() {
+    // 🆕 SIGNALEMENTS RÉCENTS : Exclut les résolus
+    renderRecentReports(reportsToDisplay = null) {
         const container = document.getElementById('recent-reports');
         if (!container) return;
         
-        const recent = this.reports.slice(0, 5);
+        const reports = reportsToDisplay || this.reports.filter(r => 
+            r.status !== 'resolved' && r.status !== 'Résolu'
+        );
+        
+        const recent = reports.slice(0, 5);
         container.innerHTML = recent.map(r => {
             const info = MPC_DATA.categories[r.category] || { label: r.category };
             const statusLabel = this.getStatusLabel(r.status);
@@ -294,11 +308,17 @@ class MPCApp {
         }).join('');
     }
 
+    // 🆕 LISTE DE SUIVI : Exclut les résolus par défaut (sauf si filtré)
     renderReportsList(filters = {}) {
         const container = document.getElementById('reports-container');
         if (!container) return;
 
         let filtered = [...this.reports];
+        
+        // Masquer les résolus par défaut, sauf si l'utilisateur filtre explicitement dessus
+        if (!filters.status || filters.status === 'all') {
+            filtered = filtered.filter(r => r.status !== 'resolved' && r.status !== 'Résolu');
+        }
 
         if (filters.search) {
             filtered = filtered.filter(r => 
@@ -320,8 +340,9 @@ class MPCApp {
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; color: var(--text-light);">
-                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
-                    <p>Aucun signalement trouvé</p>
+                    <i class="fas fa-check-circle" style="font-size: 3rem; margin-bottom: 1rem; display: block; color: var(--success);"></i>
+                    <p style="font-size: 1.1rem; font-weight: 600;">Aucun signalement en cours</p>
+                    <p style="font-size: 0.9rem; margin-top: 0.5rem;">Tous les problèmes ont été résolus ! 🎉</p>
                 </div>
             `;
             return;
@@ -350,6 +371,7 @@ class MPCApp {
         }).join('');
     }
 
+    // 🆕 ESPACE AGENT : Affiche TOUT, mais grise les résolus et retire les boutons
     renderAgentReports() {
         const container = document.getElementById('agent-reports-list');
         if (!container) return;
@@ -358,8 +380,23 @@ class MPCApp {
             const info = MPC_DATA.categories[r.category] || { label: r.category };
             const statusLabel = this.getStatusLabel(r.status);
             const statusClass = this.getStatusClass(r.status);
+            
+            const isResolved = r.status === 'resolved' || r.status === 'Résolu';
+            const actionsHtml = isResolved ? 
+                '<p style="color: var(--success); font-weight: 600; margin-top: 1rem;"><i class="fas fa-check-circle"></i> Ce signalement a été résolu</p>' :
+                `
+                <div class="report-full-actions">
+                    <button class="btn btn-small btn-primary" onclick="app.updateStatus('${r.id}', 'progress')">
+                        <i class="fas fa-spinner"></i> En cours
+                    </button>
+                    <button class="btn btn-small" onclick="app.updateStatus('${r.id}', 'resolved')" style="background: var(--success); color: white;">
+                        <i class="fas fa-check"></i> Résolu
+                    </button>
+                </div>
+                `;
+            
             return `
-                <div class="report-full-item">
+                <div class="report-full-item" style="${isResolved ? 'opacity: 0.6;' : ''}">
                     <div class="report-full-header">
                         <h4>${r.title}</h4>
                         <span class="status-badge ${statusClass}">${statusLabel}</span>
@@ -371,14 +408,7 @@ class MPCApp {
                         <span><i class="fas fa-user-shield"></i> ${r.agent}</span>
                     </div>
                     <p class="report-full-desc">${r.description}</p>
-                    <div class="report-full-actions">
-                        <button class="btn btn-small btn-primary" onclick="app.updateStatus('${r.id}', 'progress')">
-                            <i class="fas fa-spinner"></i> En cours
-                        </button>
-                        <button class="btn btn-small" onclick="app.updateStatus('${r.id}', 'resolved')" style="background: var(--success); color: white;">
-                            <i class="fas fa-check"></i> Résolu
-                        </button>
-                    </div>
+                    ${actionsHtml}
                 </div>
             `;
         }).join('');
@@ -392,7 +422,6 @@ class MPCApp {
         const statusText = this.getStatusLabel(newStatus);
         
         try {
-            // Envoyer la mise à jour à Google Sheets
             await fetch(GOOGLE_SCRIPT_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -405,7 +434,6 @@ class MPCApp {
                 })
             });
 
-            // Mettre à jour localement
             report.status = newStatus;
             report.agent = 'Agent communautaire - Avé 2';
             this.saveReports();
@@ -421,7 +449,6 @@ class MPCApp {
         }
     }
 
-    // 🆕 FONCTIONS UTILITAIRES POUR GÉRER LES STATUTS (français ET anglais)
     getStatusLabel(status) {
         const labels = {
             'pending': 'En attente',
