@@ -1,28 +1,37 @@
-# 🇹🇬 MPC-REDEVABILITÉ
+# 🇹🇬 MPC-REDEVABILITÉ | Commune d'Avé 2
+**Mécanismes de Participation Citoyenne & Redevabilité des Services Publics**
 
-**Mécanismes de Participation Citoyenne pour le suivi communautaire, la gestion des plaintes et la redevabilité des services publics de base**
-
-Projet pilote - Commune d'Avé 2 (Cantons d'Aképé, Noépé, Badja)
+Projet pilote - Cantons d'Aképé, Noépé et Badja | Togo 2026
 
 ---
 
-## 📋 Description
+## 📖 Description
+Plateforme web gratuite permettant aux citoyens d'Avé 2 de signaler les dysfonctionnements des services publics de base (eau, voirie, santé, déchets...) et aux agents communaux de les suivre, les traiter et en rendre compte via des rapports automatisés.
 
-Application web de démonstration permettant aux citoyens des cantons d'Aképé, Noépé et Badja de :
-- Signaler des problèmes liés aux services publics de base
-- Suivre l'état de traitement de leurs signalements
-- Consulter les statistiques de redevabilité
-- Participer aux rencontres communautaires
+## 🌐 Accès
+🔗 **Application en ligne** : https://cpefpa.github.io/MPC-REDEVABILITE/  
+📞 **Coordinateur Bureau du Citoyen** : +228 91 36 66 25  
 
-## 🚀 Installation
+## 🔐 Niveaux d'Accès
+| Rôle | Accès | Fonctionnalités |
+|------|-------|-----------------|
+| 👤 Citoyen | Libre (sans code) | Signalement, Suivi, Contact Coordinateur |
+| 🏛️ Administration | Protégé (`Ave2@2026`) | Tableau de bord, Carte interactive, Gestion des statuts, Export PDF/CSV |
 
-1. Assurez-vous d'avoir créé la structure avec PowerShell
-2. Copiez les fichiers dans Sublime Text
-3. Ouvrez `index.html` dans votre navigateur
+## ️ Fonctionnalités Clés
+✅ Formulaire de signalement optimisé mobile  
+✅ Numéro de suivi unique par demande  
+✅ Carte interactive des 3 cantons (Aképé, Noépé, Badja)  
+✅ Mise à jour des statuts en temps réel  
+✅ Export PDF professionnel & CSV pour les rencontres de redevabilité  
+✅ Base de données cloud (Google Sheets) sans serveur coûteux  
+✅ Bulle de contact directe avec le Bureau du Citoyen  
 
-## 💻 Lancement rapide
+## 🛠️ Stack Technique
+- **Frontend** : HTML5, CSS3, JavaScript (Vanilla)
+- **Carte** : Leaflet.js + OpenStreetMap
+- **Export** : jsPDF + AutoTable
+- **Base de données** : Google Sheets + Apps Script (API)
+- **Hébergement** : GitHub Pages (Gratuit, HTTPS inclus)
 
-```powershell
-# Ouvrir directement dans le navigateur par défaut
-$desktop = [Environment]::GetFolderPath("Desktop")
-Start-Process "$desktop\MPC-REDEVABILITE\index.html"
+## 📂 Structure du Projet

@@ -1308,3 +1308,10 @@ body {
 .hidden {
     display: none !important;
 }
+
+/* Ajustement du logo dans le portail */
+.portal-logo img {
+    display: block;
+    margin: 0 auto;
+    filter: drop-shadow(0 4px 8px rgba(0,0,0,0.1));
+}
