@@ -50,8 +50,11 @@ class MPCApp {
 
     switchView(view) {
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-        document.getElementById(`view-${view}`).classList.add('active');
-        this.currentView = view;
+        const targetView = document.getElementById(`view-${view}`);
+        if (targetView) {
+            targetView.classList.add('active');
+            this.currentView = view;
+        }
     }
 
     // Gestion du formulaire
@@ -60,14 +63,18 @@ class MPCApp {
         const desc = document.getElementById('description');
         const charCount = document.getElementById('char-count');
 
-        desc.addEventListener('input', () => {
-            charCount.textContent = `${desc.value.length} / 500`;
-        });
+        if (desc && charCount) {
+            desc.addEventListener('input', () => {
+                charCount.textContent = `${desc.value.length} / 500`;
+            });
+        }
 
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
-            this.submitReport(form);
-        });
+        if (form) {
+            form.addEventListener('submit', (e) => {
+                e.preventDefault();
+                this.submitReport(form);
+            });
+        }
     }
 
     submitReport(form) {
@@ -79,7 +86,7 @@ class MPCApp {
             location: document.getElementById('location').value,
             name: document.getElementById('anonymous').checked 
                 ? 'Anonyme' 
-                : document.getElementById('name').value || 'Anonyme',
+                : (document.getElementById('name').value || 'Anonyme'),
             phone: document.getElementById('anonymous').checked 
                 ? '' 
                 : document.getElementById('phone').value,
@@ -92,12 +99,15 @@ class MPCApp {
         this.saveReports();
 
         // Afficher le modal de succès
-        document.getElementById('tracking-number').textContent = newReport.id;
-        document.getElementById('success-modal').classList.add('active');
+        const trackingNumberEl = document.getElementById('tracking-number');
+        const modal = document.getElementById('success-modal');
+        if (trackingNumberEl) trackingNumberEl.textContent = newReport.id;
+        if (modal) modal.classList.add('active');
 
         // Reset form
         form.reset();
-        document.getElementById('char-count').textContent = '0 / 500';
+        const charCount = document.getElementById('char-count');
+        if (charCount) charCount.textContent = '0 / 500';
 
         // Refresh les vues
         this.renderDashboard();
@@ -113,15 +123,15 @@ class MPCApp {
 
         const applyFilters = () => {
             this.renderReportsList({
-                search: search.value.toLowerCase(),
-                status: statusFilter.value,
-                category: categoryFilter.value
+                search: search ? search.value.toLowerCase() : '',
+                status: statusFilter ? statusFilter.value : 'all',
+                category: categoryFilter ? categoryFilter.value : 'all'
             });
         };
 
-        search.addEventListener('input', applyFilters);
-        statusFilter.addEventListener('change', applyFilters);
-        categoryFilter.addEventListener('change', applyFilters);
+        if (search) search.addEventListener('input', applyFilters);
+        if (statusFilter) statusFilter.addEventListener('change', applyFilters);
+        if (categoryFilter) categoryFilter.addEventListener('change', applyFilters);
     }
 
     // Onglets Agent
@@ -134,14 +144,18 @@ class MPCApp {
                 tab.classList.add('active');
                 
                 document.querySelectorAll('.agent-content').forEach(c => c.classList.remove('active'));
-                document.getElementById(`tab-${tabName}`).classList.add('active');
+                const targetTab = document.getElementById(`tab-${tabName}`);
+                if (targetTab) targetTab.classList.add('active');
             });
         });
 
-        document.getElementById('sync-btn').addEventListener('click', () => {
-            alert('✅ Synchronisation réussie ! Toutes les données ont été envoyées au serveur.');
-            this.updateOfflineCount(0);
-        });
+        const syncBtn = document.getElementById('sync-btn');
+        if (syncBtn) {
+            syncBtn.addEventListener('click', () => {
+                alert('✅ Synchronisation réussie ! Toutes les données ont été envoyées au serveur.');
+                this.updateOfflineCount(0);
+            });
+        }
     }
 
     // Rendu du tableau de bord
@@ -153,10 +167,11 @@ class MPCApp {
             pending: this.reports.filter(r => r.status === 'pending').length
         };
 
-        document.getElementById('stat-total').textContent = stats.total;
-        document.getElementById('stat-resolved').textContent = stats.resolved;
-        document.getElementById('stat-progress').textContent = stats.progress;
-        document.getElementById('stat-pending').textContent = stats.pending;
+        const setEl = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+        setEl('stat-total', stats.total);
+        setEl('stat-resolved', stats.resolved);
+        setEl('stat-progress', stats.progress);
+        setEl('stat-pending', stats.pending);
 
         this.renderCategoriesChart();
         this.renderRecentReports();
@@ -164,8 +179,9 @@ class MPCApp {
 
     renderCategoriesChart() {
         const container = document.getElementById('categories-chart');
+        if (!container) return;
+
         const counts = {};
-        
         this.reports.forEach(r => {
             counts[r.category] = (counts[r.category] || 0) + 1;
         });
@@ -192,8 +208,9 @@ class MPCApp {
 
     renderRecentReports() {
         const container = document.getElementById('recent-reports');
-        const recent = this.reports.slice(0, 5);
+        if (!container) return;
         
+        const recent = this.reports.slice(0, 5);
         container.innerHTML = recent.map(r => `
             <div class="report-item">
                 <div class="report-info">
@@ -210,6 +227,8 @@ class MPCApp {
     // Liste complète des signalements
     renderReportsList(filters = {}) {
         const container = document.getElementById('reports-container');
+        if (!container) return;
+
         let filtered = [...this.reports];
 
         if (filters.search) {
@@ -232,7 +251,7 @@ class MPCApp {
         if (filtered.length === 0) {
             container.innerHTML = `
                 <div style="text-align: center; padding: 3rem; color: var(--text-light);">
-                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem;"></i>
+                    <i class="fas fa-search" style="font-size: 3rem; margin-bottom: 1rem; display: block;"></i>
                     <p>Aucun signalement trouvé</p>
                 </div>
             `;
@@ -262,6 +281,7 @@ class MPCApp {
     // Rapports pour l'agent
     renderAgentReports() {
         const container = document.getElementById('agent-reports-list');
+        if (!container) return;
         
         container.innerHTML = this.reports.map(r => `
             <div class="report-full-item">
@@ -282,7 +302,7 @@ class MPCApp {
                     <button class="btn btn-small btn-primary" onclick="app.updateStatus('${r.id}', 'progress')">
                         <i class="fas fa-spinner"></i> En cours
                     </button>
-                    <button class="btn btn-small btn-secondary" onclick="app.updateStatus('${r.id}', 'resolved')" style="background: var(--success);">
+                    <button class="btn btn-small btn-secondary" onclick="app.updateStatus('${r.id}', 'resolved')" style="background: var(--success); color: white;">
                         <i class="fas fa-check"></i> Résolu
                     </button>
                 </div>
@@ -295,7 +315,7 @@ class MPCApp {
         const report = this.reports.find(r => r.id === id);
         if (report) {
             report.status = newStatus;
-            report.agent = 'Agent communautaire - Zone 1';
+            report.agent = 'Agent communautaire - Avé 2';
             this.saveReports();
             this.renderAgentReports();
             this.renderDashboard();
@@ -308,6 +328,8 @@ class MPCApp {
 
     updateOfflineCount(count = null) {
         const el = document.getElementById('offline-count');
+        if (!el) return;
+        
         if (count === null) {
             count = Math.floor(Math.random() * 5);
         }
@@ -324,9 +346,13 @@ class MPCApp {
     }
 }
 
-// Fonctions globales
+// ========================================
+// FONCTIONS GLOBALES (Accessibles depuis le HTML)
+// ========================================
+
 function closeModal() {
-    document.getElementById('success-modal').classList.remove('active');
+    const modal = document.getElementById('success-modal');
+    if (modal) modal.classList.remove('active');
 }
 
 function exportReport(type) {
@@ -342,31 +368,30 @@ function exportReport(type) {
                 MPC_DATA.statusLabels[r.status], 
                 r.date
             ])
-        ].map(row => row.join(',')).join('\n');
+        ].map(row => row.map(cell => `"${cell}"`).join(',')).join('\n');
         
-        const blob = new Blob([csv], { type: 'text/csv' });
+        const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `MPC_Rapport_${new Date().toISOString().split('T')[0]}.csv`;
+        a.download = `MPC_Rapport_Ave2_${new Date().toISOString().split('T')[0]}.csv`;
+        document.body.appendChild(a);
         a.click();
+        document.body.removeChild(a);
     } else {
         alert('📄 Génération du rapport PDF en cours...\n\n(Fonctionnalité à implémenter avec jsPDF en production)');
     }
 }
 
-// Initialisation au chargement
-let app;
-document.addEventListener('DOMContentLoaded', () => {
-    app = new MPCApp();
-
-    // ========================================
+// ========================================
 // GESTION DE LA BULLE DE CONTACT
 // ========================================
 
 function toggleBubble() {
     const bubble = document.getElementById('contact-bubble');
     const toggle = document.getElementById('bubble-toggle');
+    if (!bubble || !toggle) return;
+
     const badge = toggle.querySelector('.notification-badge');
     
     bubble.classList.toggle('active');
@@ -392,17 +417,26 @@ document.addEventListener('click', function(event) {
     const container = document.querySelector('.contact-bubble-container');
     const bubble = document.getElementById('contact-bubble');
     
-    if (container && !container.contains(event.target) && bubble.classList.contains('active')) {
+    if (container && bubble && !container.contains(event.target) && bubble.classList.contains('active')) {
         toggleBubble();
     }
 });
 
-// Afficher automatiquement la bulle après 5 secondes (optionnel)
-setTimeout(() => {
-    const toggle = document.getElementById('bubble-toggle');
-    if (toggle && !sessionStorage.getItem('bubbleShown')) {
-        toggle.style.animation = 'pulse 1.5s infinite, bounce 1s infinite';
-        sessionStorage.setItem('bubbleShown', 'true');
-    }
-}, 5000);
+// ========================================
+// INITIALISATION AU CHARGEMENT
+// ========================================
+
+let app;
+document.addEventListener('DOMContentLoaded', () => {
+    // Initialiser l'application principale
+    app = new MPCApp();
+
+    // Afficher automatiquement une animation sur la bulle après 5 secondes
+    setTimeout(() => {
+        const toggle = document.getElementById('bubble-toggle');
+        if (toggle && !sessionStorage.getItem('bubbleShown')) {
+            toggle.style.animation = 'pulse 1.5s infinite, bounce 1s infinite';
+            sessionStorage.setItem('bubbleShown', 'true');
+        }
+    }, 5000);
 });
