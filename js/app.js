@@ -487,29 +487,42 @@ class MPCApp {
     }
 }
 
-// Fonctions globales
+// ========================================
+// FONCTIONS GLOBALES
+// ========================================
+
 function closeModal() {
     const modal = document.getElementById('success-modal');
+    if (modal) modal.classList.remove('active');
+}
+
+// 🆕 GESTION DE LA MODAL D'EXPORT (Compatible avec le HTML statique)
+function showExportModal() {
+    const modal = document.getElementById('export-modal');
+    if (modal) modal.classList.add('active');
+}
+
+function closeExportModal() {
+    const modal = document.getElementById('export-modal');
     if (modal) modal.classList.remove('active');
 }
 
 // 🆕 EXPORT PDF PROFESSIONNEL AVEC LOGO AVE 2
 async function exportReport(type, period = 'all') {
     if (type === 'pdf') {
-        // Afficher une modal de chargement
+        closeExportModal(); // Fermer la modal avant de générer
+        
         const { jsPDF } = window.jspdf;
         const doc = new jsPDF();
         
-        // Couleurs de la commune Avé 2 (basé sur le logo vert)
         const colors = {
-            primary: '#2D7A3E',    // Vert foncé
-            secondary: '#4CAF50',  // Vert clair
-            accent: '#1B5E20',     // Vert très foncé
+            primary: '#2D7A3E',
+            secondary: '#4CAF50',
+            accent: '#1B5E20',
             text: '#333333',
             light: '#E8F5E9'
         };
         
-        // Filtrer les données par période
         let filteredReports = [...app.reports];
         const now = new Date();
         const currentMonth = now.getMonth();
@@ -524,9 +537,7 @@ async function exportReport(type, period = 'all') {
             const quarterStart = currentMonth - (currentMonth % 3);
             filteredReports = filteredReports.filter(r => {
                 const date = new Date(r.date);
-                return date.getMonth() >= quarterStart && 
-                       date.getMonth() < quarterStart + 3 && 
-                       date.getFullYear() === currentYear;
+                return date.getMonth() >= quarterStart && date.getMonth() < quarterStart + 3 && date.getFullYear() === currentYear;
             });
         } else if (period === 'year') {
             filteredReports = filteredReports.filter(r => {
@@ -535,10 +546,8 @@ async function exportReport(type, period = 'all') {
             });
         }
         
-        // Trier par date (plus récent en premier)
         filteredReports.sort((a, b) => new Date(b.date) - new Date(a.date));
         
-        // Calculer les statistiques
         const stats = {
             total: filteredReports.length,
             resolved: filteredReports.filter(r => r.status === 'resolved' || r.status === 'Résolu').length,
@@ -546,7 +555,6 @@ async function exportReport(type, period = 'all') {
             pending: filteredReports.filter(r => r.status === 'pending' || r.status === 'En attente').length
         };
         
-        // Par période pour le titre
         const periodLabels = {
             'month': `Rapport Mensuel - ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
             'quarter': `Rapport Trimestriel - ${now.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`,
@@ -554,27 +562,17 @@ async function exportReport(type, period = 'all') {
             'all': 'Rapport Complet - Tous les signalements'
         };
         
-        // ==================== PAGE 1 : COUVERTURE ====================
-        
-        // En-tête avec logo (si disponible)
+        // COUVERTURE
         try {
-            // Essayer de charger le logo
             const logoResponse = await fetch('assets/logo-ave2.png');
             const logoBlob = await logoResponse.blob();
             const logoReader = new FileReader();
-            
             await new Promise((resolve) => {
                 logoReader.onloadend = () => resolve();
                 logoReader.readAsDataURL(logoBlob);
             });
-            
-            const logoBase64 = logoReader.result;
-            
-            // Ajouter le logo en haut à gauche
-            doc.addImage(logoBase64, 'PNG', 15, 15, 40, 40);
+            doc.addImage(logoReader.result, 'PNG', 15, 15, 40, 40);
         } catch (error) {
-            console.log('Logo non chargé, utilisation d\'un cercle vert');
-            // Cercle vert comme fallback
             doc.setFillColor(colors.primary);
             doc.circle(35, 35, 15, 'F');
             doc.setTextColor(255, 255, 255);
@@ -582,7 +580,6 @@ async function exportReport(type, period = 'all') {
             doc.text('Avé 2', 35, 38, { align: 'center' });
         }
         
-        // Titre principal
         doc.setTextColor(colors.primary);
         doc.setFontSize(24);
         doc.setFont('helvetica', 'bold');
@@ -592,39 +589,33 @@ async function exportReport(type, period = 'all') {
         doc.setFont('helvetica', 'normal');
         doc.text('Mécanismes de Participation Citoyenne', 105, 33, { align: 'center' });
         
-        // Commune
         doc.setFontSize(16);
         doc.setFont('helvetica', 'bold');
         doc.text('Commune d\'Avé 2', 105, 45, { align: 'center' });
         doc.setFontSize(12);
         doc.text('(Aképé - Noépé - Badja)', 105, 52, { align: 'center' });
         
-        // Ligne de séparation
         doc.setDrawColor(colors.primary);
         doc.setLineWidth(0.5);
         doc.line(15, 60, 195, 60);
         
-        // Titre du rapport
         doc.setFontSize(18);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.accent);
         doc.text(periodLabels[period], 105, 75, { align: 'center' });
         
-        // Date de génération
         doc.setFontSize(11);
         doc.setFont('helvetica', 'italic');
         doc.setTextColor(100);
         doc.text(`Généré le ${now.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}`, 105, 85, { align: 'center' });
         
-        // ==================== PAGE 2 : STATISTIQUES ====================
+        // STATISTIQUES
         doc.addPage();
-        
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.primary);
         doc.text('📊 Vue d\'ensemble', 105, 20, { align: 'center' });
         
-        // Statistiques en boîtes colorées
         const statsData = [
             { label: 'Total des signalements', value: stats.total, color: colors.primary },
             { label: 'En attente', value: stats.pending, color: '#F59E0B' },
@@ -633,88 +624,58 @@ async function exportReport(type, period = 'all') {
         ];
         
         let yPos = 35;
-        statsData.forEach((stat, index) => {
-            // Rectangle de fond
+        statsData.forEach((stat) => {
             doc.setFillColor(stat.color);
             doc.roundedRect(15, yPos, 180, 20, 3, 3, 'F');
-            
-            // Texte
             doc.setTextColor(255, 255, 255);
             doc.setFontSize(14);
             doc.setFont('helvetica', 'normal');
             doc.text(stat.label, 25, yPos + 13);
-            
             doc.setFontSize(18);
             doc.setFont('helvetica', 'bold');
             doc.text(stat.value.toString(), 180, yPos + 13, { align: 'right' });
-            
             yPos += 30;
         });
         
-        // Taux de résolution
         const resolutionRate = stats.total > 0 ? Math.round((stats.resolved / stats.total) * 100) : 0;
-        
         doc.setFontSize(14);
         doc.setTextColor(colors.primary);
         doc.text(`Taux de résolution : ${resolutionRate}%`, 15, yPos + 10);
         
-        // Barre de progression
         doc.setFillColor(colors.light);
         doc.rect(15, yPos + 15, 180, 10, 'F');
         doc.setFillColor(colors.secondary);
         doc.rect(15, yPos + 15, (resolutionRate * 180) / 100, 10, 'F');
         
-        // ==================== PAGE 3+ : DÉTAILS DES SIGNALEMENTS ====================
+        // DÉTAILS
         doc.addPage();
-        
         doc.setFontSize(20);
         doc.setFont('helvetica', 'bold');
         doc.setTextColor(colors.primary);
         doc.text('📋 Détail des signalements', 105, 20, { align: 'center' });
         
-        // Préparer les données pour le tableau
         const tableData = filteredReports.map(r => {
             const categoryLabel = (MPC_DATA.categories[r.category] || { label: r.category }).label;
-            const statusLabel = app.getStatusLabel(r.status);
             return [
                 r.id,
                 r.date,
                 categoryLabel,
                 r.title.substring(0, 40) + (r.title.length > 40 ? '...' : ''),
                 r.location,
-                statusLabel
+                app.getStatusLabel(r.status)
             ];
         });
         
-        // Créer le tableau avec autoTable
         doc.autoTable({
             startY: 30,
             head: [['ID', 'Date', 'Catégorie', 'Titre', 'Lieu', 'Statut']],
             body: tableData,
             theme: 'striped',
-            headStyles: { 
-                fillColor: colors.primary,
-                textColor: 255,
-                fontStyle: 'bold',
-                fontSize: 10
-            },
-            bodyStyles: { 
-                fontSize: 9,
-                textColor: colors.text
-            },
-            alternateRowStyles: { 
-                fillColor: colors.light 
-            },
-            columnStyles: {
-                0: { cellWidth: 20 },
-                1: { cellWidth: 25 },
-                2: { cellWidth: 30 },
-                3: { cellWidth: 50 },
-                4: { cellWidth: 35 },
-                5: { cellWidth: 25 }
-            },
+            headStyles: { fillColor: colors.primary, textColor: 255, fontStyle: 'bold', fontSize: 10 },
+            bodyStyles: { fontSize: 9, textColor: colors.text },
+            alternateRowStyles: { fillColor: colors.light },
+            columnStyles: { 0: { cellWidth: 20 }, 1: { cellWidth: 25 }, 2: { cellWidth: 30 }, 3: { cellWidth: 50 }, 4: { cellWidth: 35 }, 5: { cellWidth: 25 } },
             didParseCell: function(data) {
-                // Colorer les statuts
                 if (data.section === 'body' && data.column.index === 5) {
                     const status = data.cell.raw;
                     if (status === 'Résolu' || status === 'resolved') {
@@ -729,26 +690,22 @@ async function exportReport(type, period = 'all') {
             }
         });
         
-        // ==================== PAGE FINALE : PIED DE PAGE ====================
+        // PIED DE PAGE
         const finalPage = doc.internal.getNumberOfPages();
-        
         for (let i = 1; i <= finalPage; i++) {
             doc.setPage(i);
-            
-            // Pied de page
             doc.setFontSize(9);
             doc.setTextColor(100);
             doc.text(`Page ${i} sur ${finalPage}`, 105, 285, { align: 'center' });
-            
             doc.text('Commune d\'Avé 2 - Bureau du Citoyen', 15, 285);
             doc.text('Contact: +228 91 36 66 25', 150, 285);
         }
         
-        // Télécharger le PDF
         const fileName = `Rapport_MPC_Ave2_${period}_${now.toISOString().split('T')[0]}.pdf`;
         doc.save(fileName);
         
     } else if (type === 'csv') {
+        closeExportModal();
         const csv = [
             ['ID', 'Catégorie', 'Titre', 'Description', 'Lieu', 'Statut', 'Date', 'Agent'],
             ...app.reports.map(r => [
@@ -771,61 +728,6 @@ async function exportReport(type, period = 'all') {
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
-    }
-}
-
-// 🆕 MODAL DE SÉLECTION DE PÉRIODE POUR L'EXPORT PDF
-function showExportModal() {
-    const modalHTML = `
-        <div id="export-modal" class="modal active">
-            <div class="modal-content" style="max-width: 500px; padding: 2rem;">
-                <i class="fas fa-file-pdf" style="font-size: 3rem; color: #2D7A3E; margin-bottom: 1rem;"></i>
-                <h2 style="color: #2D7A3E; margin-bottom: 0.5rem;">Générer un rapport PDF</h2>
-                <p style="color: #666; margin-bottom: 1.5rem;">Sélectionnez la période à exporter :</p>
-                
-                <div style="display: flex; flex-direction: column; gap: 0.8rem; margin-bottom: 1.5rem;">
-                    <button onclick="exportReport('pdf', 'month')" class="btn" style="background: #2D7A3E; color: white; padding: 1rem; text-align: left;">
-                        <i class="fas fa-calendar-month"></i> 
-                        <strong>Ce mois-ci</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">Signalements du mois en cours</div>
-                    </button>
-                    
-                    <button onclick="exportReport('pdf', 'quarter')" class="btn" style="background: #4CAF50; color: white; padding: 1rem; text-align: left;">
-                        <i class="fas fa-calendar-alt"></i> 
-                        <strong>Ce trimestre</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">3 derniers mois</div>
-                    </button>
-                    
-                    <button onclick="exportReport('pdf', 'year')" class="btn" style="background: #1B5E20; color: white; padding: 1rem; text-align: left;">
-                        <i class="fas fa-calendar-year"></i> 
-                        <strong>Cette année</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">Année ${new Date().getFullYear()}</div>
-                    </button>
-                    
-                    <button onclick="exportReport('pdf', 'all')" class="btn" style="background: #666; color: white; padding: 1rem; text-align: left;">
-                        <i class="fas fa-database"></i> 
-                        <strong>Tous les signalements</strong>
-                        <div style="font-size: 0.85rem; opacity: 0.9;">Historique complet</div>
-                    </button>
-                </div>
-                
-                <button onclick="closeExportModal()" class="btn" style="background: #f0f0f0; color: #333; width: 100%;">
-                    <i class="fas fa-times"></i> Annuler
-                </button>
-            </div>
-        </div>
-    `;
-    
-    // Ajouter la modal au body
-    const div = document.createElement('div');
-    div.innerHTML = modalHTML;
-    document.body.appendChild(div.firstElementChild);
-}
-
-function closeExportModal() {
-    const modal = document.getElementById('export-modal');
-    if (modal) {
-        modal.remove();
     }
 }
 
